@@ -1,21 +1,42 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import NavBarComponent from '@/components/navbar/NavBarComponent.vue'
-import FooterComponent from '@/components/footer/FooterComponent.vue'
+import MainLayout from '@/layouts/MainLayout.vue'
 import ServiceCard from '@/components/property/ServiceCard.vue'
-import { movingServices, butlerServices } from '@/data/mockData'
-import type { Service } from '@/types/property'
+import { 
+  movingServices, 
+  butlerServices,
+  plumberServices,
+  electricianServices,
+  painterServices,
+  architectServices,
+  carpenterServices,
+  tilerServices,
+  refrigerationServices,
+  adjusterServices
+} from '@/data/mockData'
+import type { Service, ServiceCategory } from '@/types/property'
 
 const route = useRoute()
 const router = useRouter()
 
 // Get all services
-const allServices = ref<Service[]>([...movingServices, ...butlerServices])
+const allServices = ref<Service[]>([
+  ...movingServices, 
+  ...butlerServices,
+  ...plumberServices,
+  ...electricianServices,
+  ...painterServices,
+  ...architectServices,
+  ...carpenterServices,
+  ...tilerServices,
+  ...refrigerationServices,
+  ...adjusterServices
+])
 
 // Filters
-const selectedCategory = ref<'all' | 'moving-service' | 'butler-service'>(
-  (route.query.category as 'all' | 'moving-service' | 'butler-service') || 'all'
+const selectedCategory = ref<ServiceCategory | 'all'>(
+  (route.query.category as ServiceCategory | 'all') || 'all'
 )
 const searchQuery = ref((route.query.search as string) || '')
 
@@ -51,34 +72,130 @@ const updateFilters = () => {
   router.replace({ query })
 }
 
+// Service categories
+const serviceCategories = [
+  { id: 'all', name: 'Tous les services', icon: '🏠' },
+  { id: 'plumber', name: 'Plomberie', icon: '🔧' },
+  { id: 'electrician', name: 'Électricité', icon: '⚡' },
+  { id: 'painter', name: 'Peinture', icon: '🎨' },
+  { id: 'architect', name: 'Architecture', icon: '📐' },
+  { id: 'carpenter', name: 'Menuiserie', icon: '🪚' },
+  { id: 'tiler', name: 'Carrelage', icon: '🧱' },
+  { id: 'refrigeration-technician', name: 'Frigoriste', icon: '❄️' },
+  { id: 'adjuster', name: 'Ajusteur', icon: '🔩' },
+  { id: 'moving-service', name: 'Déménagement', icon: '📦' },
+  { id: 'butler-service', name: 'Majordome', icon: '🎩' },
+] as const
+
 // Watch for filter changes
-const handleCategoryChange = (category: 'all' | 'moving-service' | 'butler-service') => {
+const handleCategoryChange = (category: ServiceCategory | 'all') => {
   selectedCategory.value = category
+  currentPage.value = 1
   updateFilters()
 }
 
 const handleSearch = () => {
+  currentPage.value = 1
   updateFilters()
 }
+
+const resetFilters = () => {
+  selectedCategory.value = 'all'
+  searchQuery.value = ''
+  currentPage.value = 1
+  updateFilters()
+}
+
+// Pagination
+const currentPage = ref(1)
+const itemsPerPage = 12
+
+const paginatedServices = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage
+  const end = start + itemsPerPage
+  return filteredServices.value.slice(start, end)
+})
+
+const totalPages = computed(() => {
+  return Math.ceil(filteredServices.value.length / itemsPerPage)
+})
+
+const goToPage = (page: number) => {
+  currentPage.value = page
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+// Display range for pagination
+const displayRange = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage + 1
+  const end = Math.min(currentPage.value * itemsPerPage, filteredServices.value.length)
+  return { start, end }
+})
+
+// Visible page numbers (show max 7 pages)
+const visiblePages = computed(() => {
+  const pages: (number | string)[] = []
+  const total = totalPages.value
+  
+  if (total <= 7) {
+    for (let i = 1; i <= total; i++) {
+      pages.push(i)
+    }
+  } else {
+    if (currentPage.value <= 3) {
+      pages.push(1, 2, 3, 4, '...', total)
+    } else if (currentPage.value >= total - 2) {
+      pages.push(1, '...', total - 3, total - 2, total - 1, total)
+    } else {
+      pages.push(1, '...', currentPage.value - 1, currentPage.value, currentPage.value + 1, '...', total)
+    }
+  }
+  
+  return pages
+})
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <NavBarComponent />
-
-    <div class="pt-16 pb-12">
+  <MainLayout>
+    <div class="min-h-screen bg-gray-50">
       <!-- Header -->
-      <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white py-12">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 class="text-4xl font-bold mb-2">Tous les services</h1>
-          <p class="text-blue-100 text-lg">
-            Découvrez nos services de déménagement et de majordome
+      <div>
+      <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white py-16 relative overflow-hidden">
+        <!-- Decorative Elements -->
+        <div class="absolute inset-0 overflow-hidden pointer-events-none">
+          <div class="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl"></div>
+          <div class="absolute bottom-0 left-0 w-96 h-96 bg-white/5 rounded-full blur-3xl"></div>
+        </div>
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+              </svg>
+            </div>
+            <div class="text-white/80 text-sm font-medium">Services Professionnels RDC</div>
+          </div>
+          <h1 class="text-4xl lg:text-5xl font-bold mb-3">Tous les services</h1>
+          <p class="text-blue-100 text-lg max-w-3xl">
+            Découvrez tous nos services professionnels pour vos projets immobiliers en République Démocratique du Congo
           </p>
+          <div class="mt-6 flex items-center gap-4 flex-wrap">
+            <div class="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-lg">
+              <span class="text-2xl font-bold">{{ allServices.length }}</span>
+              <span class="text-sm text-white/90">Services disponibles</span>
+            </div>
+            <div class="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-lg">
+              <span class="text-2xl font-bold">{{ serviceCategories.length - 1 }}</span>
+              <span class="text-sm text-white/90">Catégories</span>
+            </div>
+          </div>
         </div>
       </div>
+    </div>
 
-      <!-- Filters Section -->
-      <div class="bg-white border-b border-gray-200 sticky top-16 z-40 shadow-sm">
+    <!-- Filters Section -->
+    <div class="bg-white border-b border-gray-200 shadow-md">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <!-- Search Bar -->
           <div class="mb-6">
@@ -107,66 +224,113 @@ const handleSearch = () => {
             </div>
           </div>
 
-          <!-- Filter Pills -->
-          <div class="flex flex-wrap gap-3">
-            <!-- Category Filter -->
-            <div class="flex items-center gap-2">
-              <span class="text-sm font-semibold text-gray-700">Catégorie :</span>
-              <button
-                @click="handleCategoryChange('all')"
-                class="px-4 py-2 rounded-full text-sm font-medium transition-all"
-                :class="
-                  selectedCategory === 'all'
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                "
-              >
-                Tous
-              </button>
-              <button
-                @click="handleCategoryChange('moving-service')"
-                class="px-4 py-2 rounded-full text-sm font-medium transition-all"
-                :class="
-                  selectedCategory === 'moving-service'
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                "
-              >
-                Déménagement
-              </button>
-              <button
-                @click="handleCategoryChange('butler-service')"
-                class="px-4 py-2 rounded-full text-sm font-medium transition-all"
-                :class="
-                  selectedCategory === 'butler-service'
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                "
-              >
-                Majordome
-              </button>
+          <!-- Filter Tabs -->
+          <div class="relative">
+            <div class="overflow-x-auto scrollbar-hide pb-2">
+              <div class="flex gap-2 min-w-max">
+                <button
+                  v-for="category in serviceCategories"
+                  :key="category.id"
+                  @click="handleCategoryChange(category.id as ServiceCategory | 'all')"
+                  class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 whitespace-nowrap"
+                  :class="
+                    selectedCategory === category.id
+                      ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/30 scale-105'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-blue-600'
+                  "
+                >
+                  <span class="text-lg">{{ category.icon }}</span>
+                  <span>{{ category.name }}</span>
+                  <span 
+                    class="px-2 py-0.5 rounded-full text-xs font-bold"
+                    :class="
+                      selectedCategory === category.id
+                        ? 'bg-white/20 text-white'
+                        : 'bg-gray-200 text-gray-600'
+                    "
+                  >
+                    {{ category.id === 'all' ? allServices.length : allServices.filter(s => s.category === category.id).length }}
+                  </span>
+                </button>
+              </div>
             </div>
           </div>
 
           <!-- Results Count -->
-          <div class="mt-4 text-sm text-gray-600">
-            <span class="font-semibold">{{ filteredServices.length }}</span>
-            {{ filteredServices.length === 1 ? 'service trouvé' : 'services trouvés' }}
+          <div class="mt-4 flex items-center justify-between text-sm text-gray-600">
+            <div>
+              <span class="font-semibold">{{ filteredServices.length }}</span>
+              {{ filteredServices.length === 1 ? 'service trouvé' : 'services trouvés' }}
+            </div>
+            <div v-if="filteredServices.length > itemsPerPage" class="text-gray-500">
+              Page {{ currentPage }} sur {{ totalPages }}
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Services Grid -->
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Services Grid -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-12">
+        <!-- Grid with Services -->
         <div
           v-if="filteredServices.length > 0"
-          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+          class="mb-12"
         >
-          <ServiceCard
-            v-for="service in filteredServices"
-            :key="service.id"
-            :service="service"
-          />
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <ServiceCard
+              v-for="service in paginatedServices"
+              :key="service.id"
+              :service="service"
+            />
+          </div>
+
+          <!-- Pagination -->
+          <div v-if="totalPages > 1" class="space-y-6 mt-12">
+            <!-- Page Info -->
+            <div class="text-center text-sm text-gray-600">
+              Affichage de <span class="font-semibold text-gray-900">{{ displayRange.start }}</span> à 
+              <span class="font-semibold text-gray-900">{{ displayRange.end }}</span> sur 
+              <span class="font-semibold text-gray-900">{{ filteredServices.length }}</span> services
+            </div>
+
+            <!-- Pagination Controls -->
+            <div class="flex justify-center items-center gap-2">
+              <button
+                @click="goToPage(currentPage - 1)"
+                :disabled="currentPage === 1"
+                class="px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2"
+                :class="currentPage === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-600 border border-gray-300 shadow-sm hover:shadow-md'"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+                <span class="hidden sm:inline">Précédent</span>
+              </button>
+
+              <button
+                v-for="(page, index) in visiblePages"
+                :key="index"
+                @click="typeof page === 'number' ? goToPage(page) : null"
+                :disabled="page === '...'"
+                class="px-4 py-2 rounded-lg font-medium transition-all min-w-[44px]"
+                :class="page === '...' ? 'bg-transparent text-gray-400 cursor-default' : currentPage === page ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30 scale-110' : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-600 border border-gray-300 shadow-sm hover:shadow-md'"
+              >
+                {{ page }}
+              </button>
+
+              <button
+                @click="goToPage(currentPage + 1)"
+                :disabled="currentPage === totalPages"
+                class="px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2"
+                :class="currentPage === totalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-600 border border-gray-300 shadow-sm hover:shadow-md'"
+              >
+                <span class="hidden sm:inline">Suivant</span>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+              </button>
+            </div>
+          </div>
         </div>
 
         <!-- Empty State -->
@@ -188,22 +352,27 @@ const handleSearch = () => {
           <h3 class="text-xl font-semibold text-gray-900 mb-2">Aucun service trouvé</h3>
           <p class="text-gray-600 mb-4">Essayez de modifier vos critères de recherche</p>
           <button
-            @click="
-              selectedCategory = 'all'
-              searchQuery = ''
-              updateFilters()
-            "
+            @click="resetFilters"
             class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             Réinitialiser les filtres
           </button>
         </div>
-      </div>
     </div>
-
-    <FooterComponent />
-  </div>
+    </div>
+  </MainLayout>
 </template>
 
+<style scoped>
+/* Hide scrollbar for Chrome, Safari and Opera */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
 
+/* Hide scrollbar for IE, Edge and Firefox */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+</style>
 

@@ -103,7 +103,8 @@
           <!-- Contenu de l'actualité -->
           <div class="p-6">
             <h3
-              class="text-xl font-bold text-gray-900 mb-3 line-clamp-2 group-hover:text-blue-600 transition-colors duration-300"
+              class="text-xl font-bold text-gray-900 mb-3 truncate group-hover:text-blue-600 transition-colors duration-300"
+              :title="news.title"
             >
               {{ news.title }}
             </h3>

@@ -106,7 +106,7 @@ const isPopular = ref(Math.random() > 0.6)
 
 <template>
   <div
-    class="property-card bg-white cursor-pointer group transition-all duration-500 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl border border-gray-100"
+    class="property-card card-shimmer bg-white cursor-pointer group transition-all duration-500 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl border border-gray-100"
     style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;"
     @mouseenter="handleMouseEnter"
     @mouseleave="handleMouseLeave"
@@ -288,9 +288,10 @@ const isPopular = ref(Math.random() > 0.6)
 
       <!-- Title -->
       <h3
-        class="text-lg font-bold text-gray-900 mb-3 line-clamp-2 transition-colors duration-300"
+        class="text-lg font-bold text-gray-900 mb-3 truncate transition-colors duration-300"
         :class="{ 'text-blue-600': isHovered }"
         style="font-family: 'Poppins', sans-serif;"
+        :title="property.title"
       >
         {{ property.title }}
       </h3>

@@ -3,6 +3,14 @@ import HomeView from '../views/HomeView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
+  scrollBehavior(to, from, savedPosition) {
+    // Si savedPosition existe (navigation avec back/forward), retourner à cette position
+    if (savedPosition) {
+      return savedPosition
+    }
+    // Sinon, toujours scroller en haut de la page
+    return { top: 0, behavior: 'smooth' }
+  },
   routes: [
     {
       path: '/',
@@ -36,6 +44,16 @@ const router = createRouter({
       path: '/services',
       name: 'all-services',
       component: () => import('../views/AllServicesView.vue'),
+    },
+    {
+      path: '/login',
+      name: 'login',
+      component: () => import('../views/LoginView.vue'),
+    },
+    {
+      path: '/register',
+      name: 'register',
+      component: () => import('../views/RegisterView.vue'),
     },
   ],
 })

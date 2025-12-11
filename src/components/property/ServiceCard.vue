@@ -39,7 +39,7 @@ const toggleFavorite = (e: Event) => {
 
 <template>
   <div
-    class="service-card bg-white cursor-pointer group transition-all duration-300 rounded-2xl overflow-hidden border border-gray-100 hover:border-gray-200 hover:shadow-xl"
+    class="service-card card-shimmer bg-white cursor-pointer group transition-all duration-300 rounded-2xl overflow-hidden border border-gray-100 hover:border-gray-200 hover:shadow-xl"
     style="font-family: 'Circular', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;"
     @click="router.push(`/service/${service.id}`)"
   >
@@ -113,7 +113,8 @@ const toggleFavorite = (e: Event) => {
 
       <!-- Title -->
       <h3
-        class="text-base font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors"
+        class="text-base font-semibold text-gray-900 mb-2 truncate group-hover:text-blue-600 transition-colors"
+        :title="service.title"
       >
         {{ service.title }}
       </h3>

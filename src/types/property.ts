@@ -34,12 +34,24 @@ export interface Property {
   images: string[]
   features: string[]
   status: 'for-sale' | 'for-rent' | 'sold' | 'rented'
-  category: 'for-sale' | 'for-rent' | 'moving-service' | 'butler-service'
+  category: 'for-sale' | 'for-rent' | ServiceCategory
   yearBuilt?: number
   parking?: number
   capacity?: number // Pour salles de fête, hôtels, etc.
   rooms?: number // Nombre total de pièces
 }
+
+export type ServiceCategory = 
+  | 'moving-service' 
+  | 'butler-service'
+  | 'plumber'
+  | 'electrician'
+  | 'painter'
+  | 'architect'
+  | 'adjuster'
+  | 'carpenter'
+  | 'tiler'
+  | 'refrigeration-technician'
 
 export interface Service {
   id: string
@@ -49,9 +61,11 @@ export interface Service {
   location: string
   images: string[]
   features: string[]
-  category: 'moving-service' | 'butler-service'
+  category: ServiceCategory
   rating?: number
   reviews?: number
+  phone?: string
+  availability?: string
 }
 
 export interface SearchFilters {

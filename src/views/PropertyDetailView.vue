@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import NavBarComponent from '@/components/navbar/NavBarComponent.vue'
-import FooterComponent from '@/components/footer/FooterComponent.vue'
+import MainLayout from '@/layouts/MainLayout.vue'
 import VisitRequestModal from '@/components/property/VisitRequestModal.vue'
 import { PROPERTY_TYPE_LABELS } from '@/types/property'
 import { findPropertyById } from '@/data/mockData'
@@ -52,17 +51,16 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <NavBarComponent />
-
-    <div v-if="isLoading" class="flex items-center justify-center min-h-screen">
+  <MainLayout>
+    <div class="min-h-screen bg-gray-50">
+      <div v-if="isLoading" class="flex items-center justify-center min-h-screen">
       <div class="text-center">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
         <p class="text-gray-600">Chargement...</p>
       </div>
     </div>
 
-    <div v-else-if="property" class="pt-16">
+    <div v-else-if="property">
       <!-- Image Gallery -->
       <div class="relative h-[500px] lg:h-[600px] overflow-hidden bg-gray-900">
         <div class="relative w-full h-full">
@@ -390,8 +388,7 @@ onMounted(() => {
       :property-location="property.location"
       @close="showVisitModal = false"
     />
-
-    <FooterComponent />
-  </div>
+    </div>
+  </MainLayout>
 </template>
 

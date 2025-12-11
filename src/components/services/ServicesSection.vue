@@ -39,7 +39,7 @@ const { isVisible, elementRef } = useScrollAnimation()
 <template>
   <section
     ref="elementRef"
-    class="relative py-16 lg:py-24 bg-white overflow-hidden"
+    class="relative py-16 lg:py-24 bg-gradient-to-br from-white via-indigo-50/20 to-blue-50/30 overflow-hidden"
   >
     <!-- Decorative Background -->
     <div class="absolute inset-0 overflow-hidden pointer-events-none">
@@ -56,13 +56,13 @@ const { isVisible, elementRef } = useScrollAnimation()
 
     <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div
-        class="text-center mb-12 lg:mb-16 scroll-fade-in-up"
+        class="text-left mb-12 lg:mb-16 scroll-fade-in-up"
         :class="{ visible: isVisible }"
       >
         <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-3">
           Nos services
         </h2>
-        <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+        <p class="text-lg text-gray-600 max-w-3xl">
           Une gamme complète de services immobiliers pour répondre à tous vos besoins
         </p>
       </div>

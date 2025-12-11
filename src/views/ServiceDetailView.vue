@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import NavBarComponent from '@/components/navbar/NavBarComponent.vue'
-import FooterComponent from '@/components/footer/FooterComponent.vue'
+import MainLayout from '@/layouts/MainLayout.vue'
 import { findServiceById } from '@/data/mockData'
 
 const route = useRoute()
@@ -11,6 +10,40 @@ const service = ref(findServiceById(route.params.id as string) || null)
 const currentImageIndex = ref(0)
 const isFavorite = ref(false)
 const isLoading = ref(true)
+const showInterventionModal = ref(false)
+const interventionForm = ref({
+  name: '',
+  email: '',
+  phone: '',
+  date: '',
+  address: '',
+  description: '',
+})
+
+const openInterventionModal = () => {
+  showInterventionModal.value = true
+}
+
+const closeInterventionModal = () => {
+  showInterventionModal.value = false
+}
+
+const submitInterventionRequest = () => {
+  // Ici vous pouvez ajouter la logique d'envoi du formulaire
+  console.log('Demande d\'intervention:', interventionForm.value)
+  // Simuler l'envoi
+  alert('Votre demande d\'intervention a été envoyée avec succès !')
+  closeInterventionModal()
+  // Réinitialiser le formulaire
+  interventionForm.value = {
+    name: '',
+    email: '',
+    phone: '',
+    date: '',
+    address: '',
+    description: '',
+  }
+}
 
 const formatPrice = (price: number): string => {
   return new Intl.NumberFormat('en-US', {
@@ -21,7 +54,19 @@ const formatPrice = (price: number): string => {
 }
 
 const getCategoryLabel = (category: string): string => {
-  return category === 'moving-service' ? 'Déménagement' : 'Majordome'
+  const labels: Record<string, string> = {
+    'moving-service': 'Déménagement',
+    'butler-service': 'Majordome',
+    'plumber': 'Plomberie',
+    'electrician': 'Électricité',
+    'painter': 'Peinture',
+    'architect': 'Architecture',
+    'carpenter': 'Menuiserie',
+    'tiler': 'Carrelage',
+    'refrigeration-technician': 'Climatisation',
+    'adjuster': 'Métallerie',
+  }
+  return labels[category] || category
 }
 
 const nextImage = () => {
@@ -53,17 +98,16 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <NavBarComponent />
-
-    <div v-if="isLoading" class="flex items-center justify-center min-h-screen">
+  <MainLayout>
+    <div class="min-h-screen bg-gray-50">
+      <div v-if="isLoading" class="flex items-center justify-center min-h-screen">
       <div class="text-center">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
         <p class="text-gray-600">Chargement...</p>
       </div>
     </div>
 
-    <div v-else-if="service" class="pt-16">
+    <div v-else-if="service">
       <!-- Image Gallery -->
       <div class="relative h-[500px] lg:h-[600px] overflow-hidden bg-gray-900">
         <div class="relative w-full h-full">
@@ -135,12 +179,7 @@ onMounted(() => {
         <!-- Category Badge -->
         <div class="absolute top-4 left-4 z-20">
           <span
-            class="px-4 py-2 rounded-full text-sm font-semibold backdrop-blur-md shadow-lg"
-            :class="
-              service.category === 'moving-service'
-                ? 'bg-[#00A699] text-white'
-                : 'bg-[#FC642D] text-white'
-            "
+            class="px-4 py-2 rounded-full text-sm font-semibold backdrop-blur-md shadow-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white"
           >
             {{ getCategoryLabel(service.category) }}
           </span>
@@ -245,24 +284,38 @@ onMounted(() => {
 
           <!-- Sidebar -->
           <div class="lg:col-span-1">
-            <div class="sticky top-24 bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
-              <div class="mb-6">
-                <div class="text-3xl font-bold text-gray-900 mb-2">
+            <div class="sticky top-24 bg-white rounded-2xl shadow-xl border border-gray-100 p-8 space-y-6">
+              <!-- Prix -->
+              <div class="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-xl p-6 border border-blue-200">
+                <div class="text-sm text-blue-600 font-semibold mb-1">À partir de</div>
+                <div class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent mb-1">
                   {{ formatPrice(service.price) }}
                 </div>
-                <div class="text-gray-600">par service</div>
+                <div class="text-sm text-gray-600">Tarif selon prestation</div>
               </div>
 
+              <!-- Bouton Principal -->
               <button
-                class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-4 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl mb-4"
+                @click="openInterventionModal"
+                class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-blue-500/50 transform hover:scale-105 flex items-center justify-center space-x-2 group"
               >
-                Réserver maintenant
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                </svg>
+                <span>Demander une intervention</span>
+                <svg class="w-5 h-5 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
               </button>
 
+              <!-- Bouton Secondaire -->
               <button
-                class="w-full border-2 border-gray-300 hover:border-blue-600 text-gray-700 hover:text-blue-600 font-semibold py-4 rounded-xl transition-all duration-300 mb-4"
+                class="w-full border-2 border-blue-600 hover:bg-blue-600 text-blue-600 hover:text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/30 flex items-center justify-center space-x-2"
               >
-                Contacter le prestataire
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                </svg>
+                <span>Poser une question</span>
               </button>
 
               <div class="border-t border-gray-200 pt-4 space-y-3">
@@ -307,7 +360,180 @@ onMounted(() => {
       </div>
     </div>
 
-    <FooterComponent />
-  </div>
+    <!-- Modal Demande d'Intervention -->
+    <Transition
+      enter-active-class="transition duration-300 ease-out"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition duration-200 ease-in"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div
+        v-if="showInterventionModal"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+        @click.self="closeInterventionModal"
+      >
+        <Transition
+          enter-active-class="transition duration-300 ease-out"
+          enter-from-class="opacity-0 scale-95"
+          enter-to-class="opacity-100 scale-100"
+          leave-active-class="transition duration-200 ease-in"
+          leave-from-class="opacity-100 scale-100"
+          leave-to-class="opacity-0 scale-95"
+        >
+          <div
+            v-if="showInterventionModal"
+            class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto relative"
+          >
+            <!-- Header -->
+            <div class="sticky top-0 bg-gradient-to-r from-blue-600 to-blue-700 p-6 rounded-t-3xl z-10">
+              <button
+                @click="closeInterventionModal"
+                class="absolute top-4 right-4 w-10 h-10 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center transition-all"
+              >
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+              <div class="flex items-center space-x-3">
+                <div class="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                  <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                  </svg>
+                </div>
+                <div>
+                  <h2 class="text-2xl font-bold text-white" style="font-family: 'Poppins', sans-serif">
+                    Demande d'Intervention
+                  </h2>
+                  <p class="text-blue-100 text-sm">Remplissez le formulaire ci-dessous</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Form -->
+            <form @submit.prevent="submitInterventionRequest" class="p-6 space-y-5">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <!-- Nom -->
+                <div>
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">
+                    Nom complet <span class="text-red-500">*</span>
+                  </label>
+                  <input
+                    v-model="interventionForm.name"
+                    type="text"
+                    required
+                    placeholder="John Doe"
+                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all hover:border-blue-300"
+                  />
+                </div>
+
+                <!-- Email -->
+                <div>
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">
+                    Email <span class="text-red-500">*</span>
+                  </label>
+                  <input
+                    v-model="interventionForm.email"
+                    type="email"
+                    required
+                    placeholder="john@example.com"
+                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all hover:border-blue-300"
+                  />
+                </div>
+
+                <!-- Téléphone -->
+                <div>
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">
+                    Téléphone <span class="text-red-500">*</span>
+                  </label>
+                  <input
+                    v-model="interventionForm.phone"
+                    type="tel"
+                    required
+                    placeholder="+243 XXX XXX XXX"
+                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all hover:border-blue-300"
+                  />
+                </div>
+
+                <!-- Date -->
+                <div>
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">
+                    Date souhaitée <span class="text-red-500">*</span>
+                  </label>
+                  <input
+                    v-model="interventionForm.date"
+                    type="date"
+                    required
+                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all hover:border-blue-300"
+                  />
+                </div>
+              </div>
+
+              <!-- Adresse -->
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                  Adresse <span class="text-red-500">*</span>
+                </label>
+                <input
+                  v-model="interventionForm.address"
+                  type="text"
+                  required
+                  placeholder="Rue, quartier, commune..."
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all hover:border-blue-300"
+                />
+              </div>
+
+              <!-- Description -->
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                  Description du problème <span class="text-red-500">*</span>
+                </label>
+                <textarea
+                  v-model="interventionForm.description"
+                  required
+                  rows="4"
+                  placeholder="Décrivez votre besoin en détail..."
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all hover:border-blue-300 resize-none"
+                ></textarea>
+              </div>
+
+              <!-- Info Box -->
+              <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start space-x-3">
+                <svg class="w-6 h-6 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                </svg>
+                <div class="text-sm text-blue-800">
+                  <p class="font-semibold mb-1">Réponse rapide garantie</p>
+                  <p>Nous vous contacterons dans les 24h pour confirmer votre intervention.</p>
+                </div>
+              </div>
+
+              <!-- Buttons -->
+              <div class="flex space-x-4 pt-2">
+                <button
+                  type="button"
+                  @click="closeInterventionModal"
+                  class="flex-1 px-6 py-3 border-2 border-gray-300 hover:border-gray-400 text-gray-700 font-semibold rounded-xl transition-all duration-300"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-blue-500/50 flex items-center justify-center space-x-2"
+                >
+                  <span>Envoyer la demande</span>
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                  </svg>
+                </button>
+              </div>
+            </form>
+          </div>
+        </Transition>
+      </div>
+    </Transition>
+    </div>
+  </MainLayout>
 </template>
 

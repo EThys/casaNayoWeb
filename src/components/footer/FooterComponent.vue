@@ -1,15 +1,15 @@
 <template>
-  <footer class="bg-gray-900 text-white pt-16 pb-10 relative">
+  <footer class="bg-[#1976D2] text-white pt-16 pb-10 relative">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <!-- Contenu principal -->
       <div class="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
         <!-- Colonne Logo -->
         <div class="md:col-span-2">
           <div class="flex items-center mb-6">
-            <div class="bg-blue-600 p-2.5 rounded-lg mr-4">
+            <div class="bg-white p-2.5 rounded-lg mr-4">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                class="h-8 w-8 text-white"
+                class="h-8 w-8 text-[#1976D2]"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -24,7 +24,7 @@
             </div>
             <h2 class="text-2xl font-bold tracking-tight">casa<span class="font-light">Nayo</span></h2>
           </div>
-          <p class="text-gray-400 text-base mb-6 leading-relaxed max-w-md">
+          <p class="text-blue-100 text-base mb-6 leading-relaxed max-w-md">
             Votre partenaire de confiance pour tous vos projets immobiliers. Nous vous accompagnons
             dans l'achat, la vente et la location de biens immobiliers avec expertise et
             professionnalisme.
@@ -32,7 +32,7 @@
           <div class="flex space-x-4">
             <a
               href="#"
-              class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-600 transition-all duration-300"
+              class="w-10 h-10 bg-blue-700 rounded-full flex items-center justify-center hover:bg-white hover:text-[#1976D2] transition-all duration-300"
             >
               <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                 <path
@@ -42,7 +42,7 @@
             </a>
             <a
               href="#"
-              class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-600 transition-all duration-300"
+              class="w-10 h-10 bg-blue-700 rounded-full flex items-center justify-center hover:bg-white hover:text-[#1976D2] transition-all duration-300"
             >
               <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                 <path
@@ -52,7 +52,7 @@
             </a>
             <a
               href="#"
-              class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-600 transition-all duration-300"
+              class="w-10 h-10 bg-blue-700 rounded-full flex items-center justify-center hover:bg-white hover:text-[#1976D2] transition-all duration-300"
             >
               <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                 <path
@@ -70,7 +70,7 @@
             <li>
               <a
                 href="#"
-                class="text-gray-400 hover:text-white transition-colors text-sm flex items-center group"
+                class="text-blue-100 hover:text-white transition-colors text-sm flex items-center group"
               >
                 <span class="group-hover:translate-x-1 transition-transform duration-300"
                   >Centre d'aide</span
@@ -80,7 +80,7 @@
             <li>
               <a
                 href="#"
-                class="text-gray-400 hover:text-white transition-colors text-sm flex items-center group"
+                class="text-blue-100 hover:text-white transition-colors text-sm flex items-center group"
               >
                 <span class="group-hover:translate-x-1 transition-transform duration-300"
                   >Sécurité</span
@@ -90,7 +90,7 @@
             <li>
               <a
                 href="#"
-                class="text-gray-400 hover:text-white transition-colors text-sm flex items-center group"
+                class="text-blue-100 hover:text-white transition-colors text-sm flex items-center group"
               >
                 <span class="group-hover:translate-x-1 transition-transform duration-300"
                   >Options d'annulation</span
@@ -121,7 +121,7 @@
                   />
                 </svg>
               </div>
-              <span class="text-gray-400 group-hover:text-white transition-colors duration-300 text-sm"
+              <span class="text-blue-100 group-hover:text-white transition-colors duration-300 text-sm"
                 >contact@casanayo.com</span
               >
             </li>
@@ -142,7 +142,7 @@
                   />
                 </svg>
               </div>
-              <span class="text-gray-400 group-hover:text-white transition-colors duration-300 text-sm"
+              <span class="text-blue-100 group-hover:text-white transition-colors duration-300 text-sm"
                 >+33 1 23 45 67 89</span
               >
             </li>
@@ -152,16 +152,16 @@
 
       <!-- Copyright -->
       <div class="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center">
-        <p class="text-gray-400 text-sm mb-4 md:mb-0">© 2025 casaNayo. Tous droits réservés.</p>
+        <p class="text-blue-100 text-sm mb-4 md:mb-0">© 2025 casaNayo. Tous droits réservés.</p>
         <div class="flex flex-wrap justify-center gap-4 md:gap-6">
           <a
             href="#"
-            class="text-gray-400 hover:text-white text-sm transition-all duration-300 hover:underline underline-offset-4"
+            class="text-blue-100 hover:text-white text-sm transition-all duration-300 hover:underline underline-offset-4"
             >Mentions légales</a
           >
           <a
             href="#"
-            class="text-gray-400 hover:text-white text-sm transition-all duration-300 hover:underline underline-offset-4"
+            class="text-blue-100 hover:text-white text-sm transition-all duration-300 hover:underline underline-offset-4"
             >Politique de confidentialité</a
           >
         </div>

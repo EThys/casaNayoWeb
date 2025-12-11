@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import MainLayout from '@/layouts/MainLayout.vue'
 import HeroComponent from '@/components/hero/HeroComponent.vue'
-import NavBarComponent from '@/components/navbar/NavBarComponent.vue'
 import CategorySection from '@/components/property/CategorySection.vue'
 import ServicesSection from '@/components/services/ServicesSection.vue'
+import ProfessionalServicesSection from '@/components/services/ProfessionalServicesSection.vue'
 import FeaturesSection from '@/components/features/FeaturesSection.vue'
 import MobileAppSection from '@/components/mobile/MobileAppSection.vue'
-import FooterComponent from '@/components/footer/FooterComponent.vue'
 import type { Property, Service } from '@/types/property'
 
 // Propriétés à vendre
@@ -16,7 +16,7 @@ const propertiesForSale = ref<Property[]>([
     title: 'Villa moderne avec piscine',
     description: 'Magnifique villa contemporaine avec vue panoramique',
     price: 850000,
-    location: 'Nice, Côte d\'Azur',
+    location: 'Gombe, Kinshasa',
     type: 'villa',
     bedrooms: 4,
     bathrooms: 3,
@@ -37,7 +37,7 @@ const propertiesForSale = ref<Property[]>([
     title: 'Appartement centre-ville',
     description: 'Appartement lumineux en plein cœur de la ville',
     price: 320000,
-    location: 'Paris, 15ème arrondissement',
+    location: 'Lingwala, Kinshasa',
     type: 'apartment',
     bedrooms: 3,
     bathrooms: 2,
@@ -58,7 +58,7 @@ const propertiesForSale = ref<Property[]>([
     title: 'Maison familiale avec jardin',
     description: 'Charmante maison avec grand jardin pour toute la famille',
     price: 450000,
-    location: 'Lyon, Rhône',
+    location: 'Lubumbashi, Haut-Katanga',
     type: 'house',
     bedrooms: 5,
     bathrooms: 3,
@@ -79,7 +79,7 @@ const propertiesForSale = ref<Property[]>([
     title: 'Loft industriel rénové',
     description: 'Spacieux loft avec hauts plafonds et grandes fenêtres',
     price: 520000,
-    location: 'Marseille, Vieux-Port',
+    location: 'Ngaliema, Kinshasa',
     type: 'apartment',
     bedrooms: 2,
     bathrooms: 2,
@@ -99,7 +99,7 @@ const propertiesForSale = ref<Property[]>([
     title: 'Maison de campagne',
     description: 'Authentique maison de campagne avec charme',
     price: 380000,
-    location: 'Provence, Alpes-Côte d\'Azur',
+    location: 'Mbanza-Ngungu, Kongo-Central',
     type: 'house',
     bedrooms: 4,
     bathrooms: 2,
@@ -119,7 +119,7 @@ const propertiesForSale = ref<Property[]>([
     title: 'Penthouse avec terrasse',
     description: 'Luxueux penthouse avec vue panoramique sur la ville',
     price: 1200000,
-    location: 'Paris, 16ème arrondissement',
+    location: 'Gombe, Kinshasa',
     type: 'apartment',
     bedrooms: 3,
     bathrooms: 3,
@@ -143,7 +143,7 @@ const propertiesForRent = ref<Property[]>([
     title: 'Studio moderne à louer',
     description: 'Studio récemment rénové, proche des transports',
     price: 850,
-    location: 'Paris, 11ème arrondissement',
+    location: 'Kintambo, Kinshasa',
     type: 'apartment',
     bedrooms: 1,
     bathrooms: 1,
@@ -162,7 +162,7 @@ const propertiesForRent = ref<Property[]>([
     title: 'Appartement T2 à louer',
     description: 'Appartement cosy et bien situé',
     price: 1200,
-    location: 'Bordeaux, Centre-ville',
+    location: 'Goma, Nord-Kivu',
     type: 'apartment',
     bedrooms: 2,
     bathrooms: 1,
@@ -181,7 +181,7 @@ const propertiesForRent = ref<Property[]>([
     title: 'Maison avec jardin à louer',
     description: 'Belle maison avec jardin privé',
     price: 1800,
-    location: 'Toulouse, Haute-Garonne',
+    location: 'Matadi, Kongo-Central',
     type: 'house',
     bedrooms: 3,
     bathrooms: 2,
@@ -202,10 +202,10 @@ const propertiesForRent = ref<Property[]>([
 const movingServices = ref<Service[]>([
   {
     id: 'm1',
-    title: 'Déménagement complet Paris',
+    title: 'Déménagement complet Kinshasa',
     description: 'Service de déménagement professionnel avec emballage et transport',
     price: 800,
-    location: 'Paris, Île-de-France',
+    location: 'Kinshasa, RDC',
     images: [
       'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800',
       'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800',
@@ -220,7 +220,7 @@ const movingServices = ref<Service[]>([
     title: 'Déménagement express',
     description: 'Déménagement rapide et efficace en 24h',
     price: 600,
-    location: 'Lyon, Rhône',
+    location: 'Lubumbashi, Haut-Katanga',
     images: [
       'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800',
       'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800',
@@ -233,9 +233,9 @@ const movingServices = ref<Service[]>([
   {
     id: 'm3',
     title: 'Déménagement longue distance',
-    description: 'Spécialisé dans les déménagements inter-régionaux',
+    description: 'Spécialisé dans les déménagements inter-villes',
     price: 1200,
-    location: 'France entière',
+    location: 'Toute la RDC',
     images: [
       'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800',
       'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800',
@@ -247,15 +247,15 @@ const movingServices = ref<Service[]>([
   },
   {
     id: 'm4',
-    title: 'Déménagement éco-responsable',
-    description: 'Service de déménagement respectueux de l\'environnement',
+    title: 'Déménagement professionnel',
+    description: 'Service de déménagement de qualité pour bureaux et résidences',
     price: 750,
-    location: 'Marseille, Bouches-du-Rhône',
+    location: 'Goma, Nord-Kivu',
     images: [
       'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800',
       'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800',
     ],
-    features: ['Éco-responsable', 'Matériaux recyclables', 'Véhicules propres'],
+    features: ['Professionnel', 'Matériaux protecteurs', 'Transport sécurisé'],
     category: 'moving-service',
     rating: 4.9,
     reviews: 94,
@@ -269,7 +269,7 @@ const butlerServices = ref<Service[]>([
     title: 'Majordome résidentiel',
     description: 'Service de majordome à domicile pour gestion complète du foyer',
     price: 2500,
-    location: 'Paris, Île-de-France',
+    location: 'Gombe, Kinshasa',
     images: [
       'https://images.unsplash.com/photo-1556912172-45b7abe8b7e8?w=800',
       'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800',
@@ -284,7 +284,7 @@ const butlerServices = ref<Service[]>([
     title: 'Majordome événementiel',
     description: 'Service de majordome pour vos événements et réceptions',
     price: 500,
-    location: 'Côte d\'Azur',
+    location: 'Lubumbashi, Haut-Katanga',
     images: [
       'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=800',
       'https://images.unsplash.com/photo-1556912172-45b7abe8b7e8?w=800',
@@ -299,7 +299,7 @@ const butlerServices = ref<Service[]>([
     title: 'Conciergerie premium',
     description: 'Service de conciergerie haut de gamme pour tous vos besoins',
     price: 800,
-    location: 'Paris, Île-de-France',
+    location: 'Ngaliema, Kinshasa',
     images: [
       'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800',
       'https://images.unsplash.com/photo-1556912172-45b7abe8b7e8?w=800',
@@ -314,7 +314,7 @@ const butlerServices = ref<Service[]>([
     title: 'Majordome de luxe',
     description: 'Service de majordome premium avec formation internationale',
     price: 3500,
-    location: 'Monaco',
+    location: 'Gombe, Kinshasa',
     images: [
       'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=800',
       'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800',
@@ -328,17 +328,15 @@ const butlerServices = ref<Service[]>([
 </script>
 
 <template>
-  <div class="home-view min-h-screen bg-white">
-    <!-- Navbar -->
-    <NavBarComponent />
-
-    <!-- Hero Section -->
-    <HeroComponent />
+  <MainLayout>
+    <div class="home-view min-h-screen bg-white">
+      <!-- Hero Section -->
+      <HeroComponent />
 
     <!-- Propriétés à vendre -->
     <CategorySection
       title="Propriétés à vendre"
-      subtitle="Découvrez notre sélection de biens immobiliers à vendre"
+      subtitle="Découvrez notre sélection de biens immobiliers à vendre en RDC"
       :properties="propertiesForSale"
       category="for-sale"
       :limit="4"
@@ -347,19 +345,22 @@ const butlerServices = ref<Service[]>([
     <!-- Propriétés à louer -->
     <CategorySection
       title="Propriétés à louer"
-      subtitle="Trouvez votre prochain logement à louer"
+      subtitle="Trouvez votre prochain logement à louer en République Démocratique du Congo"
       :properties="propertiesForRent"
       category="for-rent"
       :limit="4"
     />
 
-    <!-- Mobile App Section -->
-    <MobileAppSection />
+    <!-- Features Section -->
+    <FeaturesSection />
+
+    <!-- Services Professionnels -->
+    <ProfessionalServicesSection />
 
     <!-- Services de déménagement -->
     <CategorySection
       title="Services de déménagement"
-      subtitle="Déménagez en toute sérénité avec nos services professionnels"
+      subtitle="Déménagez en toute sérénité avec nos équipes professionnelles en RDC"
       :services="movingServices"
       category="moving-service"
       :limit="4"
@@ -367,22 +368,20 @@ const butlerServices = ref<Service[]>([
 
     <!-- Services de majordome -->
     <CategorySection
-      title="Services de majordome"
-      subtitle="Un service de majordome professionnel pour votre confort"
+      title="Services de majordome & conciergerie"
+      subtitle="Un service de majordome professionnel pour votre confort au quotidien"
       :services="butlerServices"
       category="butler-service"
       :limit="4"
     />
 
-    <!-- Features Section -->
-    <FeaturesSection />
-
     <!-- Services Section -->
     <ServicesSection />
 
-    <!-- Footer -->
-    <FooterComponent />
-  </div>
+    <!-- Mobile App Section -->
+    <MobileAppSection />
+    </div>
+  </MainLayout>
 </template>
 
 <style scoped>

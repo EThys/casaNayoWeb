@@ -39,45 +39,26 @@ onUnmounted(() => {
 
 <template>
   <header
-    class="fixed w-full z-50 transition-all duration-300"
-    :class="{
-      'bg-white/98 backdrop-blur-sm shadow-sm border-b border-gray-200/60': isScrolled,
-      'bg-transparent': !isScrolled && !isMobileMenuOpen,
-      'bg-white/98 backdrop-blur-sm': isMobileMenuOpen,
-    }"
+    class="fixed w-full z-50 transition-all duration-300 bg-white shadow-md"
   >
-    <!-- Background Image with Gradient (Google Style) -->
-    <div
-      v-if="!isScrolled && !isMobileMenuOpen"
-      class="absolute inset-0 z-0 pointer-events-none"
-    >
-      <div
-        class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1920&q=80')] bg-cover bg-center bg-no-repeat opacity-20"
-        style="filter: brightness(0.4)"
-      ></div>
-      <div
-        class="absolute inset-0 bg-gradient-to-br from-blue-900/60 via-blue-800/50 to-indigo-900/55"
-      ></div>
-    </div>
-
     <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex justify-between items-center h-16">
-        <!-- Logo - Google Style -->
+      <div class="flex justify-between items-center h-20">
+        <!-- Logo - Modern & Elegant -->
         <router-link
           to="/"
           class="flex items-center space-x-3 z-60 group"
           @click="isMobileMenuOpen = false"
         >
           <div
-            class="w-9 h-9 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center transition-all duration-200 group-hover:shadow-md"
+            class="w-11 h-11 bg-[#1976D2] rounded-2xl flex items-center justify-center transition-all duration-300 group-hover:scale-105 group-hover:shadow-xl shadow-lg"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              class="w-5 h-5 text-white"
+              class="w-6 h-6 text-white"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
-              stroke-width="2"
+              stroke-width="2.5"
               stroke-linecap="round"
               stroke-linejoin="round"
             >
@@ -85,13 +66,19 @@ onUnmounted(() => {
               <polyline points="9 22 9 12 15 12 15 22" />
             </svg>
           </div>
-          <span
-            class="text-lg font-medium tracking-tight transition-colors duration-200"
-            style="font-family: 'Google Sans', 'Roboto', sans-serif"
-            :class="isScrolled || isMobileMenuOpen ? 'text-gray-900' : 'text-white'"
-          >
-            casaNayo
-          </span>
+          <div class="flex flex-col -space-y-1">
+            <span
+              class="text-2xl font-bold tracking-tight text-gray-900"
+              style="font-family: 'Poppins', sans-serif"
+            >
+              casaNayo
+            </span>
+            <span
+              class="text-xs font-medium tracking-wider text-[#1976D2]"
+            >
+              Immobilier RDC
+            </span>
+          </div>
         </router-link>
 
         <!-- Desktop Menu - Google Style -->
@@ -103,23 +90,18 @@ onUnmounted(() => {
             @mouseleave="activeDropdown = null"
           >
             <button
-              class="px-3 py-2 text-sm font-normal rounded-lg transition-all duration-200 flex items-center space-x-1"
-              :class="
-                isScrolled
-                  ? 'text-gray-700 hover:bg-gray-100'
-                  : 'text-white/90 hover:bg-white/10'
-              "
-              style="font-family: 'Google Sans', 'Roboto', sans-serif"
+              class="px-4 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 flex items-center space-x-2 text-gray-800 hover:bg-blue-50 hover:text-blue-700"
+              style="font-family: 'Inter', sans-serif"
             >
               <span>Propriétés</span>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                class="w-4 h-4 transition-transform duration-200"
+                class="w-4 h-4 transition-transform duration-300"
                 :class="{ 'rotate-180': activeDropdown === 'properties' }"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
-                stroke-width="2"
+                stroke-width="2.5"
               >
                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
@@ -226,62 +208,42 @@ onUnmounted(() => {
             </transition>
           </div>
 
-          <!-- Become a Host -->
+          <!-- About -->
           <router-link
-            to="/host"
-            class="px-3 py-2 text-sm font-normal rounded-lg transition-all duration-200"
-            :class="
-              isScrolled
-                ? 'text-gray-700 hover:bg-gray-100'
-                : 'text-white/90 hover:bg-white/10'
-            "
-            style="font-family: 'Google Sans', 'Roboto', sans-serif"
+            to="/about"
+            class="px-4 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 text-gray-800 hover:bg-blue-50 hover:text-blue-700"
+            style="font-family: 'Inter', sans-serif"
           >
-            Devenir hôte
+            À propos
           </router-link>
 
-          <!-- Language Selector -->
-          <button
-            class="px-3 py-2 text-sm font-normal rounded-lg transition-all duration-200 flex items-center space-x-1"
-            :class="
-              isScrolled
-                ? 'text-gray-700 hover:bg-gray-100'
-                : 'text-white/90 hover:bg-white/10'
-            "
-            style="font-family: 'Google Sans', 'Roboto', sans-serif"
+          <!-- Help -->
+          <router-link
+            to="/help"
+            class="px-4 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 text-gray-800 hover:bg-blue-50 hover:text-blue-700"
+            style="font-family: 'Inter', sans-serif"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="w-4 h-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"
-              />
-            </svg>
-            <span>FR</span>
-          </button>
+            Aide
+          </router-link>
 
-          <!-- User Menu - Google Style -->
-          <div class="relative ml-2">
+          <!-- Contact Button -->
+          <router-link
+            to="/contact"
+            class="px-5 py-2.5 text-sm font-bold rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800"
+            style="font-family: 'Inter', sans-serif"
+          >
+            Nous contacter
+          </router-link>
+
+          <!-- User Menu - Modern Style -->
+          <div class="relative ml-3">
             <button
               @click.stop="isUserMenuOpen = !isUserMenuOpen"
-              class="flex items-center space-x-2 px-3 py-1.5 rounded-lg transition-all duration-200 border"
-              :class="
-                isScrolled
-                  ? 'border-gray-300 bg-white hover:bg-gray-50 hover:shadow-sm'
-                  : 'border-white/30 bg-white/10 hover:bg-white/20'
-              "
+              class="flex items-center space-x-2 px-3 py-2 rounded-xl transition-all duration-300 border-2 shadow-md hover:shadow-lg border-gray-200 bg-white hover:border-blue-300"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                class="w-4 h-4"
-                :class="isScrolled ? 'text-gray-600' : 'text-white/90'"
+                class="w-5 h-5 text-gray-700"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -294,15 +256,15 @@ onUnmounted(() => {
                 />
               </svg>
               <div
-                class="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center overflow-hidden"
+                class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center overflow-hidden shadow-md"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  class="w-4 h-4 text-white"
+                  class="w-5 h-5 text-white"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
-                  stroke-width="2"
+                  stroke-width="2.5"
                 >
                   <path
                     stroke-linecap="round"
@@ -374,12 +336,7 @@ onUnmounted(() => {
         <button
           v-if="isMobile"
           @click="isMobileMenuOpen = !isMobileMenuOpen"
-          class="p-2 rounded-lg transition-colors duration-200 z-60"
-          :class="
-            isScrolled || isMobileMenuOpen
-              ? 'text-gray-700 hover:bg-gray-100'
-              : 'text-white hover:bg-white/10'
-          "
+          class="p-2 rounded-lg transition-colors duration-200 z-60 text-gray-700 hover:bg-gray-100"
         >
           <svg
             v-if="!isMobileMenuOpen"
@@ -435,15 +392,31 @@ onUnmounted(() => {
             style="font-family: 'Google Sans', 'Roboto', sans-serif"
             @click="isMobileMenuOpen = false"
           >
-            Explorer
+            Accueil
           </router-link>
           <router-link
-            to="/host"
+            to="/about"
             class="flex items-center px-4 py-2.5 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-150 text-sm font-normal"
             style="font-family: 'Google Sans', 'Roboto', sans-serif"
             @click="isMobileMenuOpen = false"
           >
-            Devenir hôte
+            À propos
+          </router-link>
+          <router-link
+            to="/help"
+            class="flex items-center px-4 py-2.5 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-150 text-sm font-normal"
+            style="font-family: 'Google Sans', 'Roboto', sans-serif"
+            @click="isMobileMenuOpen = false"
+          >
+            Aide
+          </router-link>
+          <router-link
+            to="/contact"
+            class="flex items-center px-4 py-2.5 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-150 text-sm font-normal"
+            style="font-family: 'Google Sans', 'Roboto', sans-serif"
+            @click="isMobileMenuOpen = false"
+          >
+            Contact
           </router-link>
           <div class="border-t border-gray-200 my-2"></div>
           <div

@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import NavBarComponent from '@/components/navbar/NavBarComponent.vue'
-import FooterComponent from '@/components/footer/FooterComponent.vue'
+import MainLayout from '@/layouts/MainLayout.vue'
 import PropertyCard from '@/components/property/PropertyCard.vue'
 import { propertiesForSale, propertiesForRent } from '@/data/mockData'
 import type { Property, PropertyType } from '@/types/property'
@@ -78,36 +77,95 @@ const updateFilters = () => {
 // Watch for filter changes
 const handleStatusChange = (status: 'all' | 'for-sale' | 'for-rent') => {
   selectedStatus.value = status
+  currentPage.value = 1
   updateFilters()
 }
 
 const handleTypeChange = (type: PropertyType | 'all') => {
   selectedType.value = type
+  currentPage.value = 1
   updateFilters()
 }
 
 const handleSearch = () => {
+  currentPage.value = 1
   updateFilters()
 }
+
+const resetFilters = () => {
+  selectedStatus.value = 'all'
+  selectedType.value = 'all'
+  searchQuery.value = ''
+  currentPage.value = 1
+  updateFilters()
+}
+
+// Pagination
+const currentPage = ref(1)
+const itemsPerPage = 12
+
+const paginatedProperties = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage
+  const end = start + itemsPerPage
+  return filteredProperties.value.slice(start, end)
+})
+
+const totalPages = computed(() => {
+  return Math.ceil(filteredProperties.value.length / itemsPerPage)
+})
+
+const goToPage = (page: number) => {
+  currentPage.value = page
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+// Display range for pagination
+const displayRange = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage + 1
+  const end = Math.min(currentPage.value * itemsPerPage, filteredProperties.value.length)
+  return { start, end }
+})
+
+// Visible page numbers (show max 7 pages)
+const visiblePages = computed(() => {
+  const pages: (number | string)[] = []
+  const total = totalPages.value
+  
+  if (total <= 7) {
+    for (let i = 1; i <= total; i++) {
+      pages.push(i)
+    }
+  } else {
+    if (currentPage.value <= 3) {
+      pages.push(1, 2, 3, 4, '...', total)
+    } else if (currentPage.value >= total - 2) {
+      pages.push(1, '...', total - 3, total - 2, total - 1, total)
+    } else {
+      pages.push(1, '...', currentPage.value - 1, currentPage.value, currentPage.value + 1, '...', total)
+    }
+  }
+  
+  return pages
+})
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <NavBarComponent />
-
-    <div class="pt-16 pb-12">
+  <MainLayout>
+    <div class="min-h-screen bg-gray-50">
       <!-- Header -->
+      <div>
       <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white py-12">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 class="text-4xl font-bold mb-2">Toutes les propriétés</h1>
           <p class="text-blue-100 text-lg">
-            Découvrez notre sélection complète de biens immobiliers
+            Découvrez notre sélection complète de biens immobiliers en RDC
           </p>
         </div>
       </div>
+    </div>
 
-      <!-- Filters Section -->
-      <div class="bg-white border-b border-gray-200 sticky top-16 z-40 shadow-sm">
+    <!-- Filters Section -->
+    <div class="bg-white border-b border-gray-200 shadow-md">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <!-- Search Bar -->
           <div class="mb-6">
@@ -207,21 +265,77 @@ const handleSearch = () => {
           </div>
 
           <!-- Results Count -->
-          <div class="mt-4 text-sm text-gray-600">
-            <span class="font-semibold">{{ filteredProperties.length }}</span>
-            {{ filteredProperties.length === 1 ? 'propriété trouvée' : 'propriétés trouvées' }}
+          <div class="mt-4 flex items-center justify-between text-sm text-gray-600">
+            <div>
+              <span class="font-semibold">{{ filteredProperties.length }}</span>
+              {{ filteredProperties.length === 1 ? 'propriété trouvée' : 'propriétés trouvées' }}
+            </div>
+            <div v-if="filteredProperties.length > itemsPerPage" class="text-gray-500">
+              Page {{ currentPage }} sur {{ totalPages }}
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Properties Grid -->
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div v-if="filteredProperties.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          <PropertyCard
-            v-for="property in filteredProperties"
-            :key="property.id"
-            :property="property"
-          />
+    <!-- Properties Grid -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-12">
+        <!-- Grid with Properties -->
+        <div v-if="filteredProperties.length > 0" class="mb-12">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <PropertyCard
+              v-for="property in paginatedProperties"
+              :key="property.id"
+              :property="property"
+            />
+          </div>
+
+          <!-- Pagination -->
+          <div v-if="totalPages > 1" class="space-y-6 mt-12">
+            <!-- Page Info -->
+            <div class="text-center text-sm text-gray-600">
+              Affichage de <span class="font-semibold text-gray-900">{{ displayRange.start }}</span> à 
+              <span class="font-semibold text-gray-900">{{ displayRange.end }}</span> sur 
+              <span class="font-semibold text-gray-900">{{ filteredProperties.length }}</span> propriétés
+            </div>
+
+            <!-- Pagination Controls -->
+            <div class="flex justify-center items-center gap-2">
+              <button
+                @click="goToPage(currentPage - 1)"
+                :disabled="currentPage === 1"
+                class="px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2"
+                :class="currentPage === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-600 border border-gray-300 shadow-sm hover:shadow-md'"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+                <span class="hidden sm:inline">Précédent</span>
+              </button>
+
+              <button
+                v-for="(page, index) in visiblePages"
+                :key="index"
+                @click="typeof page === 'number' ? goToPage(page) : null"
+                :disabled="page === '...'"
+                class="px-4 py-2 rounded-lg font-medium transition-all min-w-[44px]"
+                :class="page === '...' ? 'bg-transparent text-gray-400 cursor-default' : currentPage === page ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30 scale-110' : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-600 border border-gray-300 shadow-sm hover:shadow-md'"
+              >
+                {{ page }}
+              </button>
+
+              <button
+                @click="goToPage(currentPage + 1)"
+                :disabled="currentPage === totalPages"
+                class="px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2"
+                :class="currentPage === totalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-600 border border-gray-300 shadow-sm hover:shadow-md'"
+              >
+                <span class="hidden sm:inline">Suivant</span>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+              </button>
+            </div>
+          </div>
         </div>
 
         <!-- Empty State -->
@@ -248,21 +362,14 @@ const handleSearch = () => {
             Essayez de modifier vos critères de recherche
           </p>
           <button
-            @click="
-              selectedStatus = 'all'
-              selectedType = 'all'
-              searchQuery = ''
-              updateFilters()
-            "
+            @click="resetFilters"
             class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             Réinitialiser les filtres
           </button>
         </div>
-      </div>
     </div>
-
-    <FooterComponent />
-  </div>
+    </div>
+  </MainLayout>
 </template>
 

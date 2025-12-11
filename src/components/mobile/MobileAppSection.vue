@@ -19,14 +19,14 @@ const steps = [
     id: 2,
     title: 'Téléchargez et installez',
     description:
-      'Appuyez sur le bouton de téléchargement et suivez les instructions pour l\'installation sur votre appareil.',
+      "Appuyez sur le bouton de téléchargement et suivez les instructions pour l'installation sur votre appareil.",
     icon: 'M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4-4m0 0L8 8m4 4v12',
   },
   {
     id: 3,
-    title: 'Lancez l\'application',
+    title: "Lancez l'application",
     description:
-      'Recherchez notre application, lancez-la et commencez à l\'utiliser immédiatement pour découvrir toutes nos fonctionnalités.',
+      "Recherchez notre application, lancez-la et commencez à l'utiliser immédiatement pour découvrir toutes nos fonctionnalités.",
     icon: 'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z',
   },
 ]
@@ -37,7 +37,7 @@ onMounted(() => {
     phoneScale.value = 1.05
     phoneRotate.value = 2
   }, 500)
-  
+
   // Continuous subtle animation
   setInterval(() => {
     phoneScale.value = phoneScale.value === 1 ? 1.02 : 1
@@ -50,7 +50,15 @@ onMounted(() => {
   <section
     ref="elementRef"
     class="py-20 lg:py-28 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 text-white relative overflow-hidden"
-    style="font-family: 'Circular', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;"
+    style="
+      font-family:
+        'Circular',
+        -apple-system,
+        BlinkMacSystemFont,
+        'Segoe UI',
+        Roboto,
+        sans-serif;
+    "
   >
     <!-- Enhanced Background Pattern -->
     <div class="absolute inset-0 overflow-hidden pointer-events-none">
@@ -67,7 +75,7 @@ onMounted(() => {
         class="absolute top-1/2 left-1/2 w-[400px] h-[400px] bg-indigo-400/20 rounded-full blur-3xl animate-float"
         style="animation-delay: 6s; animation-duration: 30s; transform: translate(-50%, -50%)"
       ></div>
-      
+
       <!-- Geometric Shapes -->
       <div
         class="absolute top-20 right-32 w-32 h-32 border-4 border-white/20 rounded-2xl rotate-45 animate-float"
@@ -77,36 +85,35 @@ onMounted(() => {
         class="absolute bottom-32 left-24 w-24 h-24 bg-white/10 rounded-full animate-float"
         style="animation-delay: 4s; animation-duration: 15s"
       ></div>
-      
+
       <!-- Grid Pattern -->
       <div
         class="absolute inset-0 opacity-10"
-        style="background-image: linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px); background-size: 50px 50px;"
+        style="
+          background-image:
+            linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+          background-size: 50px 50px;
+        "
       ></div>
-      
+
       <!-- Dots Pattern -->
       <div
         class="absolute inset-0 opacity-15"
-        style="background-image: radial-gradient(circle, rgba(255, 255, 255, 0.2) 1.5px, transparent 1.5px); background-size: 40px 40px;"
+        style="
+          background-image: radial-gradient(
+            circle,
+            rgba(255, 255, 255, 0.2) 1.5px,
+            transparent 1.5px
+          );
+          background-size: 40px 40px;
+        "
       ></div>
     </div>
 
     <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <!-- Header with Enhanced Animation - Left Aligned -->
-      <div
-        class="text-left mb-16 scroll-fade-in-up"
-        :class="{ visible: isVisible }"
-      >
-        <div class="mb-6">
-          <span
-            class="inline-flex items-center gap-2 px-5 py-2.5 bg-white/20 backdrop-blur-md rounded-full text-sm font-semibold animate-scale-in border border-white/30 shadow-lg"
-            :class="{ visible: isVisible }"
-            style="animation-delay: 0.2s"
-          >
-            <span class="text-lg">📱</span>
-            <span>Application Mobile</span>
-          </span>
-        </div>
+      <div class="text-left mb-16 scroll-fade-in-up" :class="{ visible: isVisible }">
         <h2
           class="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 bg-gradient-to-r from-white via-blue-50 to-blue-100 bg-clip-text text-transparent leading-tight"
           style="text-shadow: 0 4px 20px rgba(0, 0, 0, 0.2)"
@@ -167,11 +174,7 @@ onMounted(() => {
                         stroke="currentColor"
                         stroke-width="2.5"
                       >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          :d="step.icon"
-                        />
+                        <path stroke-linecap="round" stroke-linejoin="round" :d="step.icon" />
                       </svg>
                     </div>
                     <h3
@@ -261,11 +264,7 @@ onMounted(() => {
                   stroke="currentColor"
                   stroke-width="2"
                 >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M9 5l7 7-7 7"
-                  />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
                 </svg>
               </a>
             </div>
@@ -288,22 +287,28 @@ onMounted(() => {
               class="absolute inset-0 bg-blue-400/30 rounded-[3rem] blur-3xl -z-10 animate-pulse"
               style="animation-duration: 3s"
             ></div>
-            
+
             <!-- Phone Frame -->
             <div
               class="w-72 h-[550px] bg-gradient-to-br from-gray-900 to-gray-800 rounded-[3.5rem] p-4 shadow-2xl border-4 border-white/10"
             >
               <div class="w-full h-full bg-white rounded-[3rem] overflow-hidden relative">
                 <!-- Status Bar -->
-                <div class="h-10 bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center">
+                <div
+                  class="h-10 bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center"
+                >
                   <div class="w-40 h-1.5 bg-white/40 rounded-full"></div>
                 </div>
                 <!-- Screen Content -->
-                <div class="h-[calc(100%-2.5rem)] bg-gradient-to-br from-blue-50 via-indigo-50 to-white p-5">
+                <div
+                  class="h-[calc(100%-2.5rem)] bg-gradient-to-br from-blue-50 via-indigo-50 to-white p-5"
+                >
                   <div class="space-y-4">
                     <!-- Header -->
                     <div class="flex items-center justify-between mb-5">
-                      <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl shadow-lg"></div>
+                      <div
+                        class="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl shadow-lg"
+                      ></div>
                       <div class="text-sm font-bold text-gray-900">casaNayo</div>
                       <div class="w-8 h-8 bg-gray-200 rounded-full"></div>
                     </div>
@@ -313,14 +318,18 @@ onMounted(() => {
                     </div>
                     <!-- Property Cards -->
                     <div class="space-y-3">
-                      <div class="bg-white rounded-xl overflow-hidden shadow-md border border-gray-100">
+                      <div
+                        class="bg-white rounded-xl overflow-hidden shadow-md border border-gray-100"
+                      >
                         <div class="h-28 bg-gradient-to-br from-blue-200 to-indigo-200"></div>
                         <div class="p-3">
                           <div class="h-3.5 bg-gray-300 rounded-lg w-4/5 mb-2"></div>
                           <div class="h-2.5 bg-gray-200 rounded-lg w-3/5"></div>
                         </div>
                       </div>
-                      <div class="bg-white rounded-xl overflow-hidden shadow-md border border-gray-100">
+                      <div
+                        class="bg-white rounded-xl overflow-hidden shadow-md border border-gray-100"
+                      >
                         <div class="h-28 bg-gradient-to-br from-indigo-200 to-purple-200"></div>
                         <div class="p-3">
                           <div class="h-3.5 bg-gray-300 rounded-lg w-4/5 mb-2"></div>
@@ -382,7 +391,9 @@ section {
 .animate-scale-in {
   opacity: 0;
   transform: scale(0.9);
-  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+  transition:
+    opacity 0.6s ease-out,
+    transform 0.6s ease-out;
 }
 
 .animate-scale-in.visible {

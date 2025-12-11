@@ -1,15 +1,13 @@
 <template>
   <CustomCursor />
+  <PageTransition />
   <router-view v-slot="{ Component, route }">
     <transition
       name="page"
       mode="out-in"
-      enter-active-class="transition duration-500 ease-out"
-      enter-from-class="opacity-0 translate-y-8 scale-95"
-      enter-to-class="opacity-100 translate-y-0 scale-100"
-      leave-active-class="transition duration-300 ease-in"
-      leave-from-class="opacity-100 translate-y-0 scale-100"
-      leave-to-class="opacity-0 -translate-y-4 scale-95"
+      @before-enter="onBeforeEnter"
+      @enter="onEnter"
+      @leave="onLeave"
     >
       <component :is="Component" :key="route.path" />
     </transition>
@@ -17,7 +15,35 @@
 </template>
 
 <script setup lang="ts">
+import { nextTick } from 'vue'
 import CustomCursor from '@/components/cursor/CustomCursor.vue'
+import PageTransition from '@/components/PageTransition.vue'
+
+const onBeforeEnter = (el: Element) => {
+  const element = el as HTMLElement
+  element.style.opacity = '0'
+  element.style.transform = 'translateY(30px) scale(0.98)'
+}
+
+const onEnter = (el: Element, done: () => void) => {
+  const element = el as HTMLElement
+  nextTick(() => {
+    element.style.transition = 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+    element.style.opacity = '1'
+    element.style.transform = 'translateY(0) scale(1)'
+    
+    setTimeout(done, 600)
+  })
+}
+
+const onLeave = (el: Element, done: () => void) => {
+  const element = el as HTMLElement
+  element.style.transition = 'all 0.4s cubic-bezier(0.55, 0.085, 0.68, 0.53)'
+  element.style.opacity = '0'
+  element.style.transform = 'translateY(-20px) scale(1.02)'
+  
+  setTimeout(done, 400)
+}
 </script>
 
 <style>
@@ -59,15 +85,43 @@ html {
   background: #555;
 }
 
-/* Page transitions */
-.page-enter-active,
-.page-leave-active {
-  transition: all 0.3s ease;
+/* Enhanced Page transitions */
+.page-enter-active {
+  transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-.page-enter-from,
+.page-leave-active {
+  transition: all 0.4s cubic-bezier(0.55, 0.085, 0.68, 0.53);
+}
+
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(30px) scale(0.98);
+}
+
+.page-enter-to {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.page-leave-from {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
 .page-leave-to {
   opacity: 0;
-  transform: translateY(20px);
+  transform: translateY(-20px) scale(1.02);
+}
+
+/* Smooth scroll behavior */
+* {
+  scroll-behavior: smooth;
+}
+
+/* Prevent layout shift during transitions */
+.router-view-container {
+  min-height: 100vh;
+  position: relative;
 }
 </style>

@@ -53,17 +53,18 @@ const getViewAllLink = computed(() => {
     ref="elementRef"
     v-if="hasItems"
     class="relative py-12 lg:py-16 overflow-hidden"
-    :class="category === 'for-sale' ? 'bg-white' : category === 'for-rent' ? 'bg-gray-50' : 'bg-white'"
+    :class="{
+      'bg-gradient-to-br from-white via-blue-50/30 to-gray-50': category === 'for-sale',
+      'bg-gradient-to-br from-blue-50 via-indigo-50/40 to-purple-50/20': category === 'for-rent',
+      'bg-gradient-to-br from-gray-50 via-blue-50/20 to-white': category === 'moving-service',
+      'bg-gradient-to-br from-white via-purple-50/20 to-blue-50/30': category === 'butler-service',
+    }"
     style="font-family: 'Circular', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;"
   >
     <!-- Decorative Background Elements -->
     <div class="absolute inset-0 overflow-hidden pointer-events-none">
-      <!-- Special Abstract Background for "Propriétés à louer" -->
-      <template v-if="category === 'for-rent'">
-        <!-- Gradient Background -->
-        <div
-          class="absolute inset-0 bg-gradient-to-br from-blue-50 via-indigo-50/50 to-purple-50/30"
-        ></div>
+      <!-- Decorative elements for all sections -->
+      <template v-if="category === 'for-sale' || category === 'for-rent' || category === 'moving-service'">
         
         <!-- Animated Floating Orbs -->
         <div
@@ -227,9 +228,9 @@ const getViewAllLink = computed(() => {
           </div>
           <router-link
             :to="getViewAllLink"
-            class="inline-flex items-center px-6 py-3 border-2 border-gray-900 text-gray-900 font-semibold rounded-lg hover:bg-gray-900 hover:text-white transition-all duration-200 whitespace-nowrap flex-shrink-0 hover-lift group"
+            class="view-all-btn inline-flex items-center px-6 py-3 border-2 border-blue-600 text-blue-600 font-semibold rounded-lg hover:bg-blue-600 transition-all duration-300 whitespace-nowrap flex-shrink-0 hover-lift group shadow-md hover:shadow-xl hover:shadow-blue-500/30"
           >
-            <span>Voir tout</span>
+            <span class="relative z-10">Voir tout</span>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               class="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1"
@@ -275,3 +276,16 @@ const getViewAllLink = computed(() => {
     </div>
   </section>
 </template>
+
+<style scoped>
+/* Force white text on hover for "Voir tout" button */
+.view-all-btn:hover span,
+.view-all-btn:hover svg {
+  color: white !important;
+}
+
+.view-all-btn:hover {
+  background-color: #1976D2 !important;
+  border-color: #1976D2 !important;
+}
+</style>

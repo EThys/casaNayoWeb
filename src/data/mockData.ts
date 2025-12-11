@@ -8,7 +8,7 @@ export const propertiesForSale: Property[] = [
     description:
       'Magnifique villa contemporaine avec vue panoramique sur la mer. Cette propriété exceptionnelle offre un confort moderne avec des finitions de qualité. La villa dispose de 4 chambres spacieuses, 3 salles de bain, une cuisine équipée moderne, un salon lumineux avec cheminée, et une terrasse avec piscine privée. Le jardin paysager de 500m² offre un espace de détente idéal. Garage double et parking privé inclus.',
     price: 850000,
-    location: 'Kinshasa, Gombe',
+    location: 'Avenue du Port, Gombe, Kinshasa',
     type: 'villa',
     bedrooms: 4,
     bathrooms: 3,
@@ -32,7 +32,7 @@ export const propertiesForSale: Property[] = [
     description:
       'Appartement lumineux en plein cœur de la ville avec vue sur les monuments historiques. Situé dans un immeuble récent, cet appartement de 85m² offre un espace de vie moderne et fonctionnel. Il comprend 3 chambres, 2 salles de bain, une cuisine ouverte équipée, et un balcon avec vue panoramique. Proche de tous les commerces et transports en commun.',
     price: 320000,
-    location: 'Kinshasa, Lingwala',
+    location: 'Avenue Victoire, Lingwala, Kinshasa',
     type: 'apartment',
     bedrooms: 3,
     bathrooms: 2,
@@ -55,7 +55,7 @@ export const propertiesForSale: Property[] = [
     description:
       'Charmante maison avec grand jardin pour toute la famille. Cette propriété spacieuse de 180m² comprend 5 chambres, 3 salles de bain, une cuisine équipée, un salon avec cheminée, une salle à manger, et un grand jardin de 400m². Idéale pour les familles, avec garage double et parking.',
     price: 450000,
-    location: 'Lubumbashi, Katanga',
+    location: 'Quartier Residences, Lubumbashi, Haut-Katanga',
     type: 'house',
     bedrooms: 5,
     bathrooms: 3,
@@ -78,7 +78,7 @@ export const propertiesForSale: Property[] = [
     description:
       'Spacieux loft avec hauts plafonds et grandes fenêtres. Ce loft de 120m² a été entièrement rénové en conservant son caractère industriel. Il comprend 2 chambres, 2 salles de bain, une cuisine ouverte moderne, et un espace de vie lumineux avec hauts plafonds. Parking privé inclus.',
     price: 520000,
-    location: 'Kinshasa, Ngaliema',
+    location: 'Quartier Ma Campagne, Ngaliema, Kinshasa',
     type: 'apartment',
     bedrooms: 2,
     bathrooms: 2,
@@ -216,7 +216,7 @@ export const movingServices: Service[] = [
     description:
       'Service complet de déménagement pour particuliers et entreprises. Notre équipe expérimentée s\'occupe de tout : emballage, transport, déballage et installation. Nous utilisons du matériel professionnel et assurons vos biens pendant le transport. Disponible 7j/7, service rapide et efficace.',
     price: 800,
-    location: 'Kinshasa, Gombe',
+    location: 'Avenue de la Gare, Gombe, Kinshasa',
     images: [
       'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1200',
       'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=1200',
@@ -285,7 +285,7 @@ export const butlerServices: Service[] = [
     description:
       'Service de majordome à domicile pour gestion complète du foyer. Notre majordome s\'occupe de la gestion quotidienne de votre domicile : ménage, cuisine, courses, organisation d\'événements, et bien plus. Service discret, fiable et personnalisé selon vos besoins.',
     price: 2500,
-    location: 'Kinshasa, Gombe',
+    location: 'Avenue de la Gare, Gombe, Kinshasa',
     images: [
       'https://images.unsplash.com/photo-1556912172-45b7abe8b7e8?w=1200',
       'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1200',
@@ -301,7 +301,7 @@ export const butlerServices: Service[] = [
     description:
       'Service de majordome pour vos événements et réceptions. Notre équipe de majordomes professionnels s\'occupe de tous les aspects de votre événement : service à table, coordination, organisation, et bien plus. Service premium pour événements mémorables.',
     price: 500,
-    location: 'Kinshasa, Ngaliema',
+    location: 'Quartier Ma Campagne, Ngaliema, Kinshasa',
     images: [
       'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=1200',
       'https://images.unsplash.com/photo-1556912172-45b7abe8b7e8?w=1200',
@@ -317,7 +317,7 @@ export const butlerServices: Service[] = [
     description:
       'Service de conciergerie haut de gamme pour tous vos besoins. Notre service de conciergerie s\'occupe de toutes vos demandes : réservations, courses, services personnalisés, et bien plus. Disponible 24/7 pour votre confort.',
     price: 800,
-    location: 'Kinshasa, Gombe',
+    location: 'Avenue de la Gare, Gombe, Kinshasa',
     images: [
       'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1200',
       'https://images.unsplash.com/photo-1556912172-45b7abe8b7e8?w=1200',
@@ -350,8 +350,227 @@ export const findPropertyById = (id: string): Property | undefined => {
   return [...propertiesForSale, ...propertiesForRent].find((p) => p.id === id)
 }
 
+// Services professionnels - Plombiers
+export const plumberServices: Service[] = [
+  {
+    id: 'p1',
+    title: 'Plombier Expert Kinshasa',
+    description: 'Service de plomberie professionnel pour tous vos besoins. Installation, réparation, dépannage d\'urgence. Interventions rapides 24/7. Spécialisé en installation sanitaire, réparation de fuites, débouchage de canalisations.',
+    price: 150,
+    location: 'Avenue du Commerce, Gombe, Kinshasa',
+    images: ['https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?w=1200'],
+    features: ['Dépannage urgent', 'Installation sanitaire', 'Réparation fuites', 'Débouchage'],
+    category: 'plumber',
+    rating: 4.8,
+    reviews: 156,
+    phone: '+243 815 234 567',
+    availability: '24/7',
+  },
+  {
+    id: 'p2',
+    title: 'Plomberie Rapide Lubumbashi',
+    description: 'Plombier qualifié avec 10 ans d\'expérience. Installation complète de salle de bain, cuisine, système de chauffage. Garantie sur tous les travaux.',
+    price: 120,
+    location: 'Avenue Kasaï, Lubumbashi, Haut-Katanga',
+    images: ['https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?w=1200'],
+    features: ['Installation complète', 'Garantie travaux', 'Devis gratuit'],
+    category: 'plumber',
+    rating: 4.7,
+    reviews: 89,
+    phone: '+243 826 789 123',
+    availability: 'Lun-Sam 8h-18h',
+  },
+]
+
+// Services professionnels - Électriciens
+export const electricianServices: Service[] = [
+  {
+    id: 'e1',
+    title: 'Électricien Certifié Kinshasa',
+    description: 'Électricien professionnel certifié. Installation électrique complète, mise aux normes, dépannage urgent, installation panneaux solaires. Tous travaux d\'électricité générale et industrielle.',
+    price: 180,
+    location: 'Boulevard du 30 Juin, Gombe, Kinshasa',
+    images: ['https://images.unsplash.com/photo-1621905251918-48416bd8575a?w=1200'],
+    features: ['Installation électrique', 'Panneaux solaires', 'Dépannage 24/7', 'Certifié'],
+    category: 'electrician',
+    rating: 4.9,
+    reviews: 203,
+    phone: '+243 840 567 891',
+    availability: '24/7',
+  },
+  {
+    id: 'e2',
+    title: 'Électricien Résidentiel Goma',
+    description: 'Spécialiste en électricité résidentielle. Installation, rénovation, mise en conformité. Intervention rapide pour tous vos besoins électriques.',
+    price: 140,
+    location: 'Avenue du Rond-Point, Goma, Nord-Kivu',
+    images: ['https://images.unsplash.com/photo-1621905251918-48416bd8575a?w=1200'],
+    features: ['Installation', 'Rénovation', 'Mise aux normes'],
+    category: 'electrician',
+    rating: 4.6,
+    reviews: 78,
+    phone: '+243 899 456 321',
+    availability: 'Lun-Ven 7h-19h',
+  },
+]
+
+// Services professionnels - Peintres
+export const painterServices: Service[] = [
+  {
+    id: 'pt1',
+    title: 'Peintre Professionnel Kinshasa',
+    description: 'Peinture intérieure et extérieure de qualité. Revêtements muraux, décoration, finitions haut de gamme. Conseils couleurs et devis gratuit.',
+    price: 200,
+    location: 'Avenue de la Justice, Gombe, Kinshasa',
+    images: ['https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=1200'],
+    features: ['Intérieur/Extérieur', 'Revêtements muraux', 'Conseils déco', 'Devis gratuit'],
+    category: 'painter',
+    rating: 4.8,
+    reviews: 134,
+    phone: '+243 810 987 654',
+    availability: 'Lun-Sam 8h-17h',
+  },
+  {
+    id: 'pt2',
+    title: 'Peinture Décorative Lubumbashi',
+    description: 'Spécialiste en peinture décorative et finitions spéciales. Enduits, stuc, patines. Travaux soignés et garantis.',
+    price: 180,
+    location: 'Quartier Kenya, Lubumbashi, Haut-Katanga',
+    images: ['https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=1200'],
+    features: ['Peinture décorative', 'Finitions spéciales', 'Garantie'],
+    category: 'painter',
+    rating: 4.7,
+    reviews: 92,
+    phone: '+243 821 345 678',
+    availability: 'Lun-Sam 8h-18h',
+  },
+]
+
+// Services professionnels - Architectes
+export const architectServices: Service[] = [
+  {
+    id: 'a1',
+    title: 'Architecte DPLG Kinshasa',
+    description: 'Architecte diplômé avec 15 ans d\'expérience. Conception de plans, rénovation, extension, suivi de chantier. Projets résidentiels et commerciaux.',
+    price: 500,
+    location: 'Avenue Colonel Mondjiba, Gombe, Kinshasa',
+    images: ['https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=1200'],
+    features: ['Plans 3D', 'Suivi chantier', 'Permis de construire', 'Devis détaillé'],
+    category: 'architect',
+    rating: 5.0,
+    reviews: 67,
+    phone: '+243 844 123 789',
+    availability: 'Sur rendez-vous',
+  },
+  {
+    id: 'a2',
+    title: 'Cabinet Architecture Moderne',
+    description: 'Cabinet d\'architecture spécialisé en constructions modernes et écologiques. Design contemporain, optimisation espaces.',
+    price: 600,
+    location: 'Quartier Joli Parc, Ngaliema, Kinshasa',
+    images: ['https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=1200'],
+    features: ['Design moderne', 'Écologique', 'Plans détaillés'],
+    category: 'architect',
+    rating: 4.9,
+    reviews: 54,
+    phone: '+243 817 654 321',
+    availability: 'Lun-Ven 9h-17h',
+  },
+]
+
+// Services professionnels - Menuisiers
+export const carpenterServices: Service[] = [
+  {
+    id: 'c1',
+    title: 'Menuisier Expert Kinshasa',
+    description: 'Menuiserie sur mesure de qualité. Fabrication et pose de portes, fenêtres, placards, cuisines équipées. Bois noble et garantie.',
+    price: 250,
+    location: 'Avenue Pumbu, Gombe, Kinshasa',
+    images: ['https://images.unsplash.com/photo-1556909212-d5b604d0c90d?w=1200'],
+    features: ['Sur mesure', 'Bois noble', 'Cuisine équipée', 'Garantie'],
+    category: 'carpenter',
+    rating: 4.8,
+    reviews: 118,
+    phone: '+243 828 765 432',
+    availability: 'Lun-Sam 8h-17h',
+  },
+]
+
+// Services professionnels - Carreleurs
+export const tilerServices: Service[] = [
+  {
+    id: 't1',
+    title: 'Carreleur Professionnel Kinshasa',
+    description: 'Pose de carrelage intérieur et extérieur. Sol, mur, terrasse, piscine. Faïence, grès, pierre naturelle. Travail soigné garanti.',
+    price: 160,
+    location: 'Avenue Colonel Ebeya, Gombe, Kinshasa',
+    images: ['https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?w=1200'],
+    features: ['Intérieur/Extérieur', 'Pierre naturelle', 'Piscine', 'Garantie'],
+    category: 'tiler',
+    rating: 4.7,
+    reviews: 95,
+    phone: '+243 890 234 567',
+    availability: 'Lun-Sam 7h-18h',
+  },
+]
+
+// Services professionnels - Frigoristes
+export const refrigerationServices: Service[] = [
+  {
+    id: 'f1',
+    title: 'Frigoriste Expert Kinshasa',
+    description: 'Spécialiste en climatisation et froid. Installation, maintenance, dépannage de climatiseurs, chambres froides, réfrigérateurs. Intervention rapide.',
+    price: 170,
+    location: 'Avenue Wagenia, Gombe, Kinshasa',
+    images: ['https://images.unsplash.com/photo-1585338107529-13afc5f02586?w=1200'],
+    features: ['Climatisation', 'Chambre froide', 'Dépannage urgent', 'Maintenance'],
+    category: 'refrigeration-technician',
+    rating: 4.9,
+    reviews: 142,
+    phone: '+243 841 876 543',
+    availability: '24/7',
+  },
+]
+
+// Services professionnels - Ajusteurs
+export const adjusterServices: Service[] = [
+  {
+    id: 'aj1',
+    title: 'Ajusteur Métallier Kinshasa',
+    description: 'Ajusteur métallier professionnel. Fabrication et installation de portails, grilles, rampes, structures métalliques. Soudure et finitions.',
+    price: 190,
+    location: 'Avenue Huileries, Gombe, Kinshasa',
+    images: ['https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=1200'],
+    features: ['Portails', 'Grilles sécurité', 'Structures métalliques', 'Soudure'],
+    category: 'adjuster',
+    rating: 4.6,
+    reviews: 73,
+    phone: '+243 819 345 678',
+    availability: 'Lun-Sam 7h-17h',
+  },
+]
+
+// Tous les services professionnels
+export const allProfessionalServices: Service[] = [
+  ...plumberServices,
+  ...electricianServices,
+  ...painterServices,
+  ...architectServices,
+  ...carpenterServices,
+  ...tilerServices,
+  ...refrigerationServices,
+  ...adjusterServices,
+]
+
 // Fonction helper pour trouver un service par ID
 export const findServiceById = (id: string): Service | undefined => {
-  return [...movingServices, ...butlerServices].find((s) => s.id === id)
+  return [...movingServices, ...butlerServices, ...allProfessionalServices].find((s) => s.id === id)
+}
+
+// Fonction helper pour obtenir les services par catégorie
+export const getServicesByCategory = (category: string): Service[] => {
+  return [...movingServices, ...butlerServices, ...allProfessionalServices].filter(
+    (s) => s.category === category
+  )
 }
 

@@ -120,36 +120,41 @@ onUnmounted(() => {
   width: 100%;
   height: 100%;
   pointer-events: none;
-  z-index: 9999;
+  z-index: 99999;
 }
 
 /* Main Cursor Dot */
 .cursor-dot {
   position: absolute;
-  width: 10px;
-  height: 10px;
-  background: #3b82f6;
+  width: 12px;
+  height: 12px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   border-radius: 50%;
   transform: translate(-50%, -50%);
   transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), 
               background 0.15s ease,
               width 0.15s ease,
-              height 0.15s ease;
+              height 0.15s ease,
+              box-shadow 0.15s ease;
   will-change: transform;
-  box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.6),
+              0 0 30px rgba(16, 185, 129, 0.3);
 }
 
 .cursor-dot.cursor-hover {
-  transform: translate(-50%, -50%) scale(1.8);
-  background: #2563eb;
-  width: 12px;
-  height: 12px;
-  box-shadow: 0 0 15px rgba(37, 99, 235, 0.7);
+  transform: translate(-50%, -50%) scale(1.5);
+  background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+  width: 14px;
+  height: 14px;
+  box-shadow: 0 0 20px rgba(52, 211, 153, 0.8),
+              0 0 40px rgba(16, 185, 129, 0.4),
+              0 0 60px rgba(16, 185, 129, 0.2);
 }
 
 .cursor-dot.cursor-click {
-  transform: translate(-50%, -50%) scale(0.7);
-  background: #1e40af;
+  transform: translate(-50%, -50%) scale(0.6);
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  box-shadow: 0 0 25px rgba(5, 150, 105, 1);
 }
 
 /* Follower Circle */
@@ -157,30 +162,35 @@ onUnmounted(() => {
   position: absolute;
   width: 50px;
   height: 50px;
-  border: 2px solid rgba(59, 130, 246, 0.4);
+  border: 2.5px solid rgba(16, 185, 129, 0.3);
   border-radius: 50%;
   transform: translate(-50%, -50%);
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
               height 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
               border-color 0.3s ease,
-              background 0.3s ease;
+              background 0.3s ease,
+              box-shadow 0.3s ease;
   will-change: transform, width, height;
-  background: rgba(59, 130, 246, 0.05);
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 70%);
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.1);
 }
 
 .cursor-follower.follower-hover {
-  width: 70px;
-  height: 70px;
-  border-color: rgba(37, 99, 235, 0.6);
-  background: rgba(37, 99, 235, 0.15);
-  border-width: 2.5px;
+  width: 75px;
+  height: 75px;
+  border-color: rgba(52, 211, 153, 0.5);
+  background: radial-gradient(circle, rgba(52, 211, 153, 0.15) 0%, transparent 70%);
+  border-width: 3px;
+  box-shadow: 0 0 30px rgba(16, 185, 129, 0.2),
+              0 0 50px rgba(16, 185, 129, 0.1);
 }
 
 .cursor-follower.follower-click {
   width: 35px;
   height: 35px;
-  border-color: rgba(30, 64, 175, 0.8);
-  background: rgba(30, 64, 175, 0.2);
+  border-color: rgba(5, 150, 105, 0.7);
+  background: radial-gradient(circle, rgba(5, 150, 105, 0.25) 0%, transparent 70%);
+  box-shadow: 0 0 25px rgba(5, 150, 105, 0.3);
 }
 
 /* Hide on mobile/touch devices */

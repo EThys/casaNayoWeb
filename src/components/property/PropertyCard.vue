@@ -8,13 +8,16 @@ const router = useRouter()
 
 interface Props {
   property: Property
+  variant?: 'grid' | 'list'
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  variant: 'grid'
+})
 const isFavorite = ref(false)
 const currentImageIndex = ref(0)
 const isHovered = ref(false)
-const autoCarouselInterval = ref<NodeJS.Timeout | null>(null)
+const autoCarouselInterval = ref<any>(null)
 
 const formatPrice = (price: number): string => {
   return new Intl.NumberFormat('en-US', {
@@ -106,15 +109,20 @@ const isPopular = ref(Math.random() > 0.6)
 
 <template>
   <div
-    class="property-card card-shimmer bg-white cursor-pointer group transition-all duration-500 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl border border-gray-100"
-    style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;"
+    class="property-card group bg-white cursor-pointer transition-all duration-700 overflow-hidden border border-slate-100/50 hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.15)] relative"
+    :class="[
+      variant === 'list' ? 'flex flex-row h-72 rounded-[40px]' : 'flex flex-col rounded-[32px]',
+      { 'transform -translate-y-3 scale-[1.01]': isHovered && variant === 'grid' }
+    ]"
     @mouseenter="handleMouseEnter"
     @mouseleave="handleMouseLeave"
     @click="router.push(`/property/${property.id}`)"
-    :class="{ 'transform -translate-y-2 scale-[1.02]': isHovered }"
   >
     <!-- Image Container with Auto Carousel -->
-    <div class="relative h-72 overflow-hidden">
+    <div 
+      class="relative overflow-hidden"
+      :class="variant === 'list' ? 'w-2/5 h-full' : 'h-72'"
+    >
       <div class="relative w-full h-full">
         <!-- Image with smooth fade transition -->
         <div class="relative w-full h-full">
@@ -207,10 +215,10 @@ const isPopular = ref(Math.random() > 0.6)
       <!-- Favorite Button with enhanced hover -->
       <button
         @click="toggleFavorite"
-        class="absolute top-4 right-4 w-11 h-11 bg-white/95 backdrop-blur-md rounded-full flex items-center justify-center shadow-2xl hover:scale-110 transition-all duration-300 z-30 transform hover:rotate-12"
+        class="absolute top-5 right-5 w-11 h-11 backdrop-blur-xl rounded-full flex items-center justify-center shadow-2xl transition-all duration-500 z-30 group/fav"
         :class="{
-          'bg-gradient-to-br from-blue-600 to-indigo-600 shadow-blue-500/50': isFavorite,
-          'hover:bg-white': !isFavorite,
+          'bg-blue-600 shadow-blue-500/40': isFavorite,
+          'bg-white/80 hover:bg-white': !isFavorite,
         }"
       >
         <svg
@@ -234,13 +242,13 @@ const isPopular = ref(Math.random() > 0.6)
       <div class="absolute top-4 left-4 flex flex-col gap-2 z-30">
         <span
           v-if="isNew"
-          class="px-4 py-2 rounded-full text-xs font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg backdrop-blur-sm transform group-hover:scale-105 transition-transform duration-300"
+          class="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-blue-600 text-white shadow-xl backdrop-blur-md"
         >
           Nouveau
         </span>
         <span
           v-if="isPopular"
-          class="px-4 py-2 rounded-full text-xs font-bold bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg backdrop-blur-sm transform group-hover:scale-105 transition-transform duration-300"
+          class="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-cyan-500 text-white shadow-xl backdrop-blur-md"
         >
           Populaire
         </span>
@@ -248,13 +256,18 @@ const isPopular = ref(Math.random() > 0.6)
     </div>
 
     <!-- Content with enhanced hover effects -->
-    <div class="p-5 transition-all duration-500" :class="{ 'bg-gradient-to-br from-gray-50 to-white': isHovered }">
+    <div 
+      class="p-8 transition-all duration-500 flex flex-col justify-between" 
+      :class="[
+        variant === 'list' ? 'flex-1' : '',
+        { 'bg-gradient-to-br from-gray-50 to-white': isHovered }
+      ]"
+    >
       <!-- Location -->
-      <div class="flex items-center gap-2 mb-3">
+      <div class="flex items-center gap-2 mb-4">
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          class="w-4 h-4 text-gray-400 flex-shrink-0 transition-colors duration-300"
-          :class="{ 'text-blue-600': isHovered }"
+          class="w-3.5 h-3.5 text-blue-600"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -262,42 +275,28 @@ const isPopular = ref(Math.random() > 0.6)
           <path
             stroke-linecap="round"
             stroke-linejoin="round"
-            stroke-width="2"
+            stroke-width="2.5"
             d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
           />
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-          />
         </svg>
-        <span
-          class="text-sm text-gray-600 font-semibold truncate transition-colors duration-300"
-          :class="{ 'text-blue-600': isHovered }"
-        >
+        <span class="text-[11px] font-black uppercase tracking-widest text-slate-400 truncate">
           {{ property.location }}
-        </span>
-        <span
-          class="text-xs text-gray-400 px-2 py-0.5 bg-gray-100 rounded-full transition-all duration-300"
-          :class="{ 'bg-blue-100 text-blue-600': isHovered }"
-        >
-          {{ getTypeLabel(property.type) }}
         </span>
       </div>
 
       <!-- Title -->
       <h3
-        class="text-lg font-bold text-gray-900 mb-3 truncate transition-colors duration-300"
-        :class="{ 'text-blue-600': isHovered }"
-        style="font-family: 'Poppins', sans-serif;"
+        class="text-xl font-black text-slate-900 mb-4 tracking-tighter leading-tight group-hover:text-blue-600 transition-colors"
         :title="property.title"
       >
         {{ property.title }}
       </h3>
 
       <!-- Features Icons - Compact -->
-      <div class="flex items-center gap-4 text-gray-600 mb-3 text-sm flex-wrap">
+      <div 
+        class="flex items-center gap-4 text-gray-600 mb-6 text-sm flex-wrap"
+        :class="variant === 'list' ? 'mb-auto' : 'mb-3'"
+      >
         <span
           v-if="hasBedrooms"
           class="transition-colors duration-300"
@@ -335,9 +334,7 @@ const isPopular = ref(Math.random() > 0.6)
       <div class="flex items-baseline justify-between pt-3 border-t border-gray-100">
         <div class="transition-transform duration-300" :class="{ 'scale-105': isHovered }">
           <span
-            class="text-2xl font-bold text-gray-900 transition-colors duration-300"
-            :class="{ 'text-blue-600': isHovered }"
-            style="font-family: 'Poppins', sans-serif;"
+            class="text-2xl font-black text-slate-900 tracking-tighter"
           >
             {{ formatPrice(property.price) }}
           </span>
@@ -373,6 +370,7 @@ const isPopular = ref(Math.random() > 0.6)
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+  line-clamp: 2;
   overflow: hidden;
 }
 

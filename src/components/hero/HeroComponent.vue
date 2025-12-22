@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import gsap from 'gsap'
+import PixiLiquidHero from './PixiLiquidHero.vue'
 import type { SearchFilters, PropertyFeature } from '@/types/property'
 import { PROPERTY_TYPE_LABELS, PROPERTY_FEATURES } from '@/types/property'
 
@@ -23,60 +25,144 @@ const searchFilters = ref<SearchFilters>({
 const showAdvancedFilters = ref(false)
 const selectedFeatures = ref<PropertyFeature[]>([])
 const isLoaded = ref(false)
+const activeTab = ref<'essentials' | 'amenities'>('essentials')
 
 // Carrousel de textes pour les services avec effet typing
 const servicesText = [
-  'bien immobilier',
-  'plombier expert',
-  'électricien qualifié',
-  'architecte professionnel',
-  'menuisier expérimenté',
-  'frigoriste certifié',
-  'peintre professionnel',
-  'femme de ménage',
-  'carreleur expert',
+  "votre villa de rêve",
+  "votre artisan de confiance",
+  "votre appartement de luxe",
+  "votre technicien expert",
+  "votre terrain d'exception",
+  "votre expert immobilier",
 ]
 const currentServiceIndex = ref(0)
 const displayedText = ref('')
 const isDeleting = ref(false)
 const typingSpeed = ref(100)
 
-// Effet de machine à écrire avec variations de vitesse
-const typeText = () => {
-  const currentText = servicesText[currentServiceIndex.value]
+const heroTitle = ref<HTMLElement | null>(null)
+const searchBarRef = ref<HTMLElement | null>(null)
+const floaters = ref<HTMLElement[]>([])
 
-  if (!isDeleting.value) {
-    // Écrire le texte caractère par caractère
-    if (displayedText.value.length < currentText.length) {
-      displayedText.value = currentText.substring(0, displayedText.value.length + 1)
-      // Vitesse variable pour un effet plus naturel
-      typingSpeed.value = Math.random() * 100 + 50 // Entre 50ms et 150ms
-      setTimeout(typeText, typingSpeed.value)
-    } else {
-      // Pause plus longue pour laisser lire le texte complet
-      setTimeout(() => {
-        isDeleting.value = true
-        typeText()
-      }, 2500)
+// GSAP Powered Carousel for services
+const typeText = () => {
+  const nextIndex = (currentServiceIndex.value + 1) % servicesText.length
+  const currentText = servicesText[currentServiceIndex.value]
+  
+  gsap.to('.typing-text', {
+    opacity: 0,
+    y: -20,
+    duration: 0.5,
+    onComplete: () => {
+      currentServiceIndex.value = nextIndex
+      displayedText.value = servicesText[nextIndex]
+      gsap.fromTo('.typing-text', 
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 0.5 }
+      )
     }
-  } else {
-    // Effacer le texte plus rapidement
-    if (displayedText.value.length > 0) {
-      displayedText.value = currentText.substring(0, displayedText.value.length - 1)
-      typingSpeed.value = 30 // Effacement rapide
-      setTimeout(typeText, typingSpeed.value)
-    } else {
-      // Passer au texte suivant après une courte pause
-      isDeleting.value = false
-      currentServiceIndex.value = (currentServiceIndex.value + 1) % servicesText.length
-      setTimeout(typeText, 700)
-    }
+  })
+}
+
+onMounted(() => {
+  displayedText.value = servicesText[0]
+  setInterval(typeText, 4000)
+})
+
+const initGSAPHero = () => {
+  if (!heroTitle.value) return
+
+  // Advanced Title Reveal - Cinematic staggered entrance
+  const spans = heroTitle.value.querySelectorAll('span')
+  gsap.from(spans, {
+    y: 100,
+    opacity: 0,
+    filter: 'blur(30px)',
+    scale: 0.8,
+    rotateX: -30,
+    stagger: 0.25,
+    duration: 2,
+    ease: 'expo.out',
+    delay: 0.4
+  })
+
+  // Floating Organic Blobs Parallax (Background Life)
+  floaters.value.forEach((floater, i) => {
+    gsap.to(floater, {
+      y: 'random(-60, 60)',
+      x: 'random(-60, 60)',
+      rotation: 'random(-25, 25)',
+      duration: 'random(4, 7)',
+      repeat: -1,
+      yoyo: true,
+      ease: 'sine.inOut',
+      delay: i * 0.8
+    })
+  })
+
+  // 3D Parallax Mouse Tracking (Elite Depth)
+  const heroSection = document.querySelector('.hero-section')
+  if (heroSection) {
+    window.addEventListener('mousemove', (e: MouseEvent) => {
+      const { clientX, clientY } = e
+      const xPos = (clientX / window.innerWidth - 0.5) * 25
+      const yPos = (clientY / window.innerHeight - 0.5) * 25
+      
+      gsap.to('.hero-parallax-bg', {
+        x: xPos * -2,
+        y: yPos * -2,
+        rotationY: xPos * 0.6,
+        rotationX: yPos * -0.6,
+        duration: 1.5,
+        ease: 'power2.out'
+      })
+
+      gsap.to('.hero-content-parallax', {
+        x: xPos * 1.2,
+        y: yPos * 1.2,
+        duration: 1.2,
+        ease: 'power2.out'
+      })
+    })
   }
+
+  /* 
+  // Magnetic Search Bar (Awwwards Grade) - DISABLED as per user request
+  const searchBar = searchBarRef.value
+  if (searchBar) {
+    window.addEventListener('mousemove', (e: MouseEvent) => {
+      const rect = searchBar.getBoundingClientRect()
+      const centerX = rect.left + rect.width / 2
+      const centerY = rect.top + rect.height / 2
+      const distance = Math.hypot(e.clientX - centerX, e.clientY - centerY)
+      
+      if (distance < 450) {
+        gsap.to(searchBar, {
+          x: (e.clientX - centerX) * 0.2,
+          y: (e.clientY - centerY) * 0.2,
+          scale: 1.05,
+          duration: 0.7,
+          ease: 'power3.out'
+        })
+      } else {
+        gsap.to(searchBar, {
+          x: 0,
+          y: 0,
+          scale: 1,
+          duration: 1.5,
+          ease: 'elastic.out(1, 0.4)'
+        })
+      }
+    })
+  }
+  */
 }
 
 onMounted(() => {
   setTimeout(() => {
     isLoaded.value = true
+    initGSAPHero()
   }, 100)
 
   // Démarrer l'effet de typing
@@ -172,560 +258,332 @@ const selectLocation = (location: string) => {
 </script>
 
 <template>
-  <!-- Hero Section - Modern Split Design with Decorations -->
-  <div class="hero-section relative min-h-[90vh] flex items-center overflow-hidden">
-    <!-- Background with Image -->
-    <div class="absolute inset-0 z-0">
-      <div
-        class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1920&q=80')] bg-cover bg-center bg-no-repeat animate-ken-burns"
-      ></div>
-      <div
-        class="absolute inset-0"
-        style="
-          background: linear-gradient(
-            to right,
-            rgba(25, 118, 210, 0.95),
-            rgba(25, 118, 210, 0.85) 50%,
-            rgba(25, 118, 210, 0.6)
-          );
-        "
-      ></div>
+  <!-- Hero Section - Ultra Modern Design -->
+  <div class="hero-section relative min-h-screen flex items-center overflow-hidden bg-[#0A0F1C]">
+    <!-- PixiJS Liquid Background Layer -->
+    <PixiLiquidHero 
+        image-url="https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=1920&q=80" 
+    />
 
-      <!-- Decorative Floating Elements -->
-      <div
-        class="absolute top-20 left-10 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl animate-float"
-      ></div>
-      <div
-        class="absolute bottom-20 right-20 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl animate-float-delayed"
-      ></div>
-      <div
-        class="absolute top-1/2 left-1/4 w-48 h-48 bg-blue-400/5 rounded-full blur-2xl animate-pulse-slow"
-      ></div>
-
-      <!-- Animated Shapes -->
-      <div
-        class="absolute top-40 right-1/4 w-4 h-4 bg-blue-400/30 rounded-full animate-bounce-slow"
-      ></div>
-      <div
-        class="absolute bottom-40 left-1/3 w-3 h-3 bg-blue-400/40 rounded-full animate-ping-slow"
-      ></div>
-      <div
-        class="absolute top-1/3 right-1/3 w-2 h-2 bg-blue-300/50 rounded-full animate-pulse"
-      ></div>
-
-      <!-- Enhanced Grid Pattern with Animation -->
-      <div
-        class="absolute inset-0 opacity-20 animate-grid-slide"
-        style="
-          background-image:
-            linear-gradient(rgba(25, 118, 210, 0.4) 2px, transparent 2px),
-            linear-gradient(90deg, rgba(25, 118, 210, 0.4) 2px, transparent 2px);
-          background-size: 80px 80px;
-        "
-      ></div>
-
-      <!-- Diagonal Grid Overlay -->
-      <div
-        class="absolute inset-0 opacity-10 animate-grid-pulse"
-        style="
-          background-image:
-            repeating-linear-gradient(
-              45deg,
-              transparent,
-              transparent 40px,
-              rgba(25, 118, 210, 0.5) 40px,
-              rgba(25, 118, 210, 0.5) 42px
-            ),
-            repeating-linear-gradient(
-              -45deg,
-              transparent,
-              transparent 40px,
-              rgba(25, 118, 210, 0.5) 40px,
-              rgba(25, 118, 210, 0.5) 42px
-            );
-        "
-      ></div>
-
-      <!-- Animated Grid Lines -->
-      <div class="absolute inset-0 overflow-hidden">
-        <!-- Horizontal lines -->
-        <div
-          class="absolute w-full h-0.5 bg-gradient-to-r from-transparent via-blue-400/40 to-transparent top-1/4 animate-line-slide-horizontal"
-        ></div>
-        <div
-          class="absolute w-full h-0.5 bg-gradient-to-r from-transparent via-blue-300/40 to-transparent top-2/4 animate-line-slide-horizontal animation-delay-200"
-        ></div>
-        <div
-          class="absolute w-full h-0.5 bg-gradient-to-r from-transparent via-blue-400/40 to-transparent top-3/4 animate-line-slide-horizontal animation-delay-400"
-        ></div>
-
-        <!-- Vertical lines -->
-        <div
-          class="absolute w-0.5 h-full bg-gradient-to-b from-transparent via-blue-400/40 to-transparent left-1/4 animate-line-slide-vertical"
-        ></div>
-        <div
-          class="absolute w-0.5 h-full bg-gradient-to-b from-transparent via-blue-300/40 to-transparent left-2/4 animate-line-slide-vertical animation-delay-300"
-        ></div>
-        <div
-          class="absolute w-0.5 h-full bg-gradient-to-b from-transparent via-blue-400/40 to-transparent left-3/4 animate-line-slide-vertical animation-delay-500"
+    <!-- Dynamic Background Layer -->
+    <div class="absolute inset-0 z-0 perspective-1000">
+      <!-- Organic Blobs (Interactive) -->
+      <div class="absolute inset-0 overflow-hidden pointer-events-none">
+        <div v-for="i in 3" :key="i" 
+             :ref="(el: any) => el && floaters.push(el)"
+             class="absolute opacity-20 blur-[100px] rounded-full"
+             :class="[
+               i === 1 ? 'w-[500px] h-[500px] bg-blue-500 top-[-10%] left-[-10%]' : '',
+               i === 2 ? 'w-[400px] h-[400px] bg-indigo-600 bottom-[-10%] right-[-10%]' : '',
+               i === 3 ? 'w-[300px] h-[300px] bg-cyan-400 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2' : ''
+             ]"
         ></div>
       </div>
 
-      <!-- Geometric Decorative Shapes -->
+      <!-- High-end Background Image with 3D Parallax (Keep as fallback or overlay mix) -->
       <div
-        class="absolute top-1/4 left-1/3 w-32 h-32 border-2 border-blue-400/20 rotate-45 animate-rotate-slow"
+        class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=1920&q=80')] bg-cover bg-center bg-no-repeat opacity-20 mix-blend-luminosity animate-ken-burns hero-parallax-bg"
       ></div>
-      <div
-        class="absolute bottom-1/3 right-1/4 w-24 h-24 border-2 border-blue-300/20 rounded-full animate-scale-pulse"
-      ></div>
-      <div
-        class="absolute top-2/3 left-1/4 w-20 h-20 border-2 border-blue-400/20 animate-rotate-reverse"
-      ></div>
+      
+      <!-- Premium Mesh Gradient -->
+      <div class="absolute inset-0 opacity-60 mix-blend-overlay">
+        <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-600/30 rounded-full blur-[120px] animate-pulse-slow"></div>
+        <div class="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-indigo-600/20 rounded-full blur-[150px] animate-pulse-slow animation-delay-1000"></div>
+      </div>
 
-      <!-- Floating Particles -->
-      <div
-        class="absolute top-1/4 right-1/3 w-2 h-2 bg-blue-300/60 rounded-full animate-float-particle"
-      ></div>
-      <div
-        class="absolute top-1/2 right-1/4 w-1.5 h-1.5 bg-blue-400/50 rounded-full animate-float-particle animation-delay-200"
-      ></div>
-      <div
-        class="absolute bottom-1/3 left-1/3 w-2.5 h-2.5 bg-blue-300/70 rounded-full animate-float-particle animation-delay-400"
-      ></div>
-      <div
-        class="absolute top-3/4 right-2/3 w-1 h-1 bg-blue-400/60 rounded-full animate-float-particle animation-delay-600"
-      ></div>
 
-      <!-- Light Beams -->
-      <div
-        class="absolute top-0 left-1/4 w-1 h-full bg-gradient-to-b from-blue-400/20 via-transparent to-transparent animate-beam-fade"
-      ></div>
-      <div
-        class="absolute top-0 right-1/3 w-1 h-full bg-gradient-to-b from-blue-300/20 via-transparent to-transparent animate-beam-fade animation-delay-300"
-      ></div>
+      <!-- Modern UI Elements - Animated Grid -->
+      <div class="absolute inset-0 opacity-[0.03] animate-grid-slide"
+           style="background-image: linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px); background-size: 60px 60px;">
+      </div>
 
-      <!-- Corner Accents -->
-      <div
-        class="absolute top-0 left-0 w-40 h-40 border-l-2 border-t-2 border-blue-400/30 animate-corner-expand"
-      ></div>
-      <div
-        class="absolute bottom-0 right-0 w-40 h-40 border-r-2 border-b-2 border-blue-400/30 animate-corner-expand animation-delay-200"
-      ></div>
+      <!-- Animated Tech Lines -->
+      <div class="absolute inset-0 overflow-hidden opacity-10">
+        <div class="absolute w-full h-px bg-gradient-to-r from-transparent via-blue-500 to-transparent top-1/4 animate-line-slide-horizontal"></div>
+        <div class="absolute w-full h-px bg-gradient-to-r from-transparent via-blue-400 to-transparent top-2/4 animate-line-slide-horizontal animation-delay-2000"></div>
+        <div class="absolute w-full h-px bg-gradient-to-r from-transparent via-blue-500 to-transparent top-3/4 animate-line-slide-horizontal animation-delay-4000"></div>
+      </div>
     </div>
 
-    <!-- Content -->
-    <div
-      class="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 pt-24 sm:pt-32"
-    >
-      <div
-        class="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12 items-start"
-        :class="{ 'animate-fade-in-up': isLoaded }"
-      >
-        <!-- LEFT COLUMN - Text Content (3/5) -->
-        <div class="lg:col-span-3 space-y-8">
-          <div class="space-y-4">
-            <h1
-              class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight animate-fade-in-up"
-              style="font-family: 'Poppins', sans-serif"
-            >
-              <span class="inline-block animate-slide-right text-white">Trouvez votre</span><br />
-              <span class="inline-block drop-shadow-lg min-h-[1.2em]">
-                <span class="typing-text">{{ displayedText }}</span>
-                <span class="typing-cursor">|</span> </span
-              ><br />
-              <span class="inline-block animate-slide-right animation-delay-400 text-white"
-                >idéal</span
-              >
+
+    <!-- Content Wrapper -->
+    <div class="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-40 pb-20 hero-content-parallax">
+        <div class="flex flex-col items-center text-center space-y-16">
+          <!-- Brand & Hero Text - Elite Typography -->
+          <div class="max-w-4xl space-y-10 transition-all duration-1000 ease-out" :class="{ 'opacity-100 translate-y-0': isLoaded, 'opacity-0 translate-y-10': !isLoaded }">
+          
+
+            <h1 ref="heroTitle" class="text-5xl md:text-7xl lg:text-8xl font-black text-white leading-[0.9] tracking-tighter">
+              <span class="block">Votre plateforme</span>
+              <span class="block text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-blue-300 to-blue-600 animate-shimmer mt-2">tout-en-un</span>
             </h1>
 
-            <p
-              class="text-lg sm:text-xl text-white font-normal leading-relaxed max-w-xl animate-fade-in animation-delay-600"
-            >
-              Propriétés et services professionnels en
-              <span class="text-white font-semibold">République Démocratique du Congo</span>
-            </p>
-          </div>
-
-          <!-- Stats -->
-          <div
-            class="grid grid-cols-3 gap-3 sm:gap-4 max-w-xl animate-fade-in-up animation-delay-800"
-          >
-            <div
-              class="text-center p-3 sm:p-4 bg-white/5 backdrop-blur-sm rounded-xl border border-white/20 hover:bg-white/10 hover:border-white/40 transition-all duration-300 hover:scale-110 group"
-            >
-              <div
-                class="text-xl sm:text-2xl font-bold text-white group-hover:text-white transition-colors"
-              >
-                50K+
+            <div class="space-y-8 flex flex-col items-center">
+              <p class="text-xl md:text-3xl text-white font-medium tracking-tight animate-fade-in animation-delay-400 max-w-3xl h-10 flex items-center">
+                Immobilier <span class="text-blue-400 mx-2">&</span> Services pour <span class="typing-text text-blue-400 ml-2">{{ displayedText }}</span>
+              </p>
+              
+              <div class="max-w-3xl space-y-4 animate-fade-in animation-delay-600">
+                <p class="text-lg md:text-xl text-slate-200 font-bold leading-relaxed">
+                  Maisons à louer ou acheter, et tous les artisans de confiance pour vos projets.
+                </p>
+                <p class="text-base md:text-lg text-slate-400 font-light leading-relaxed">
+                  De la recherche de votre maison à son entretien au quotidien, CasaNayo vous connecte aux meilleurs professionnels. Location, vente, maçons, plombiers... Trouvez tout, en un clic.
+                </p>
               </div>
-              <div class="text-xs text-white/80 group-hover:text-white transition-colors">
-                Propriétés
-              </div>
-              <div
-                class="h-1 w-0 group-hover:w-full bg-white rounded-full mt-2 transition-all duration-500"
-              ></div>
-            </div>
-            <div
-              class="text-center p-3 sm:p-4 bg-white/5 backdrop-blur-sm rounded-xl border border-white/20 hover:bg-white/10 hover:border-white/40 transition-all duration-300 hover:scale-110 group"
-            >
-              <div
-                class="text-xl sm:text-2xl font-bold text-white group-hover:text-white transition-colors"
-              >
-                1K+
-              </div>
-              <div class="text-xs text-white/80 group-hover:text-white transition-colors">
-                Professionnels
-              </div>
-              <div
-                class="h-1 w-0 group-hover:w-full bg-white rounded-full mt-2 transition-all duration-500"
-              ></div>
-            </div>
-            <div
-              class="text-center p-3 sm:p-4 bg-white/5 backdrop-blur-sm rounded-xl border border-white/20 hover:bg-white/10 hover:border-white/40 transition-all duration-300 hover:scale-110 group"
-            >
-              <div
-                class="text-xl sm:text-2xl font-bold text-white group-hover:text-white transition-colors"
-              >
-                10+
-              </div>
-              <div class="text-xs text-white/80 group-hover:text-white transition-colors">
-                Villes
-              </div>
-              <div
-                class="h-1 w-0 group-hover:w-full bg-white rounded-full mt-2 transition-all duration-500"
-              ></div>
             </div>
           </div>
 
-          <!-- Popular Locations -->
-          <div class="hidden lg:block animate-fade-in animation-delay-1000">
-            <p class="text-sm font-semibold text-white mb-4">🌍 Destinations populaires</p>
-            <div class="flex flex-wrap gap-3">
-              <button
-                v-for="(loc, index) in popularLocations.slice(0, 6)"
-                :key="loc"
-                @click="selectLocation(loc)"
-                :style="{ animationDelay: `${1200 + index * 100}ms` }"
-                class="px-4 py-2 text-sm font-medium bg-white/10 hover:bg-white/20 text-white border border-white/30 hover:border-white/50 rounded-lg transition-all duration-300 backdrop-blur-sm hover:scale-105 animate-fade-in"
-              >
-                {{ loc }}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- RIGHT COLUMN - Search Card (2/5) -->
-        <div class="lg:col-span-2 animate-scale-in animation-delay-400">
-          <div
-            class="bg-white rounded-2xl shadow-2xl overflow-hidden p-6 relative group hover:shadow-blue-500/20 transition-all duration-500"
-          >
-            <!-- Decorative Corner -->
-            <div
-              class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400/10 to-transparent rounded-bl-full"
-            ></div>
-
-            <div class="relative">
-              <h3
-                class="text-xl font-bold text-gray-900 mb-1 flex items-center gap-2"
-                style="font-family: 'Poppins', sans-serif"
-              >
-                <svg
-                  class="w-6 h-6 text-blue-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+        <!-- Compact Horizontal Search Area -->
+        <div 
+          ref="searchBarRef" 
+          class="w-full max-w-5xl"
+          v-motion
+          :initial="{ opacity: 0, y: 100, scale: 0.9 }"
+          :enter="{ opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 100, damping: 20, delay: 800 } }"
+        >
+          <div class="relative max-w-5xl mx-auto group/search">
+            <!-- Subtle Glow -->
+            <div class="absolute -inset-1 bg-gradient-to-r from-blue-600/20 to-blue-400/20 rounded-[32px] blur-2xl opacity-0 group-hover/search:opacity-100 transition duration-1000"></div>
+            
+            <div class="relative glass-card bg-[#0A0F1C]/40 backdrop-blur-[40px] border border-white/10 rounded-[32px] p-3 md:p-2 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.6)] flex flex-wrap lg:flex-nowrap items-center gap-3 md:gap-2">
+              
+              <!-- Buy/Rent Toggle -->
+              <div class="flex p-1 bg-white/5 rounded-2xl border border-white/5 relative min-w-[200px]">
+                <div 
+                  class="absolute inset-y-1 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] bg-blue-600 rounded-xl"
+                  :style="{ left: searchFilters.status === 'for-sale' ? '4px' : '50%', width: 'calc(50% - 4px)' }"
+                ></div>
+                <button 
+                  v-for="status in ['for-sale', 'for-rent']" 
+                  :key="status"
+                  @click="searchFilters.status = status as any"
+                  class="relative z-10 flex-1 py-2 text-[10px] font-black uppercase tracking-[0.2em] transition-colors duration-300"
+                  :class="searchFilters.status === status ? 'text-white' : 'text-slate-400 hover:text-slate-200'"
                 >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-                Rechercher
-              </h3>
-              <p class="text-sm text-gray-500 mb-4">Trouvez votre bien idéal</p>
-            </div>
+                  {{ status === 'for-sale' ? 'Acheter' : 'Louer' }}
+                </button>
+              </div>
 
-            <!-- Compact Search Form -->
-            <div class="space-y-4">
-              <!-- Location -->
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Localisation</label>
+              <!-- Location Input -->
+              <div class="flex-1 min-w-[280px] md:min-w-[250px] relative px-4 border-l md:border-l border-white/10 md:border-white/5 py-2 md:py-0">
+                <label class="block text-[9px] font-black uppercase tracking-[0.2em] text-blue-400 mb-1 ml-1">Localisation</label>
                 <input
                   v-model="searchFilters.location"
                   type="text"
-                  placeholder="Ville, quartier..."
-                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-base transition-all hover:border-blue-300"
-                  @keyup.enter="handleSearch"
-                  list="location-suggestions"
+                  placeholder="Gombe, Kinshasa..."
+                  class="w-full bg-transparent text-sm text-white placeholder:text-slate-600 outline-none font-medium"
                 />
-                <datalist id="location-suggestions">
-                  <option v-for="loc in popularLocations" :key="loc" :value="loc" />
-                </datalist>
               </div>
 
-              <!-- Type -->
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Type</label>
-                <select
-                  v-model="searchFilters.type"
-                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-base cursor-pointer transition-all hover:border-blue-300"
-                >
-                  <option :value="undefined">Tous types</option>
-                  <option value="house">Maison</option>
-                  <option value="apartment">Appartement</option>
-                  <option value="villa">Villa</option>
-                  <option value="office">Bureau</option>
-                  <option value="land">Terrain</option>
-                </select>
+              <!-- Type Select -->
+              <div class="flex-1 min-w-[200px] md:min-w-[180px] relative px-4 border-l md:border-l border-white/10 md:border-white/5 py-2 md:py-0">
+                <label class="block text-[9px] font-black uppercase tracking-[0.2em] text-blue-400 mb-1 ml-1">Type de bien</label>
+                <div class="relative">
+                  <select v-model="searchFilters.type" class="w-full bg-transparent text-sm text-white appearance-none outline-none font-medium cursor-pointer">
+                    <option :value="undefined" class="bg-[#0A0F1C]">Tous les types</option>
+                    <option value="house" class="bg-[#0A0F1C]">Villa d'Exception</option>
+                    <option value="apartment" class="bg-[#0A0F1C]">Appartement Luxe</option>
+                    <option value="land" class="bg-[#0A0F1C]">Terrain Prestige</option>
+                  </select>
+                </div>
               </div>
 
-              <!-- Status -->
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Statut</label>
-                <select
-                  v-model="searchFilters.status"
-                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-base cursor-pointer transition-all hover:border-blue-300"
-                >
-                  <option value="for-sale">À vendre</option>
-                  <option value="for-rent">À louer</option>
-                </select>
+              <!-- Budget Input -->
+              <div class="flex-1 min-w-[180px] relative px-4 border-l border-white/5">
+                <label class="block text-[9px] font-black uppercase tracking-[0.2em] text-blue-400 mb-1 ml-1">Budget Max ($)</label>
+                <input v-model.number="searchFilters.maxPrice" type="number" placeholder="Ex: 500k" class="w-full bg-transparent text-sm text-white placeholder:text-slate-600 outline-none font-medium" />
               </div>
 
-              <!-- Search Button -->
-              <button
-                @click="handleSearch"
-                class="w-full px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold rounded-xl text-base transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-blue-500/50 flex items-center justify-center space-x-2 group relative overflow-hidden"
-                style="font-family: 'Poppins', sans-serif"
-              >
-                <div
-                  class="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"
-                ></div>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="w-5 h-5 relative z-10 group-hover:scale-110 transition-transform"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  stroke-width="3"
+              <!-- Search Button & Filters Trigger -->
+              <div class="flex items-center gap-2 pr-2 ml-auto">
+                <button 
+                  @click="showAdvancedFilters = true"
+                  class="w-12 h-12 flex items-center justify-center bg-white/5 hover:bg-white/10 rounded-2xl border border-white/5 transition-all text-slate-400 hover:text-white"
+                  title="Filtres Avancés"
                 >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-                <span class="relative z-10">Rechercher</span>
-              </button>
+                  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                  </svg>
+                </button>
+                <button
+                  @click="handleSearch"
+                  class="w-14 h-14 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white rounded-2xl shadow-lg shadow-blue-500/20 transition-all flex items-center justify-center active:scale-95"
+                >
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </button>
+              </div>
             </div>
-
-            <!-- Advanced Filters Link -->
-            <button
-              @click="showAdvancedFilters = !showAdvancedFilters"
-              class="mt-4 text-sm text-blue-600 hover:text-blue-700 font-semibold flex items-center space-x-1 group"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="w-4 h-4 group-hover:rotate-90 transition-transform duration-300"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
-                />
-              </svg>
-              <span class="group-hover:translate-x-1 transition-transform">Plus de filtres</span>
-            </button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Advanced Filters Modal -->
+    <!-- Elite Scroll Indicator -->
+    <div 
+        class="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center space-y-4 animate-fade-in animation-delay-4000 pointer-events-none"
+        :class="{ 'opacity-100': isLoaded, 'opacity-0': !isLoaded }"
+    >
+        <span class="text-[9px] font-black uppercase tracking-[0.4em] text-white/40">Découvrir</span>
+        <div class="w-10 h-10 rounded-full bg-white/5 backdrop-blur-md border border-white/10 flex items-center justify-center animate-bounce shadow-2xl">
+            <svg class="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+        </div>
+    </div>
+
+    <!-- Modern Search Overlay - Elite Modal -->
     <Teleport to="body">
       <transition
-        enter-active-class="transition duration-300 ease-out"
+        enter-active-class="transition duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]"
         enter-from-class="opacity-0 scale-95"
         enter-to-class="opacity-100 scale-100"
-        leave-active-class="transition duration-200 ease-in"
+        leave-active-class="transition duration-400 ease-in"
         leave-from-class="opacity-100 scale-100"
         leave-to-class="opacity-0 scale-95"
       >
         <div
           v-if="showAdvancedFilters"
-          class="modal-backdrop fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4"
-          @click="showAdvancedFilters = false"
+          class="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-[#0A0F1C]/80 backdrop-blur-md"
         >
-          <div
-            class="modal-filters bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[80vh] overflow-y-auto relative transition-all duration-300 z-[10000]"
-            @click.stop
-          >
-            <div class="p-6">
-              <div class="flex items-center justify-between mb-6">
-                <h3 class="text-2xl font-bold text-gray-900">Filtres avancés</h3>
+          <!-- Modal Container -->
+          <div class="relative w-full max-w-2xl bg-[#F8FAFC] border border-slate-200 rounded-[32px] overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.15)]">
+            <!-- Modal Header with Tabs -->
+            <div class="px-8 pt-8 pb-4 border-b border-white/5 space-y-6">
+              <div class="flex justify-between items-start">
+                <div class="space-y-1">
+                  <h2 class="text-3xl font-black text-slate-900 tracking-tight">Filtres Elite</h2>
+                  <p class="text-blue-700 text-[10px] font-bold uppercase tracking-[0.2em]">Affinez votre recherche</p>
+                </div>
                 <button
                   @click="showAdvancedFilters = false"
-                  class="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="w-6 h-6"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
+                  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
 
-              <div class="space-y-5">
-                <!-- Budget -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">
-                      Prix minimum (CDF)
-                    </label>
-                    <input
-                      v-model.number="searchFilters.minPrice"
-                      type="number"
-                      min="0"
-                      placeholder="Prix min"
-                      class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-base transition-all hover:border-gray-300"
-                    />
+              <!-- Tabs Navigation -->
+              <div class="flex p-1 bg-slate-100 rounded-2xl border border-slate-200 w-fit">
+                <button 
+                  @click="activeTab = 'essentials'"
+                  class="px-6 py-2.5 text-[11px] font-black uppercase tracking-[0.1em] rounded-xl transition-all duration-300"
+                  :class="activeTab === 'essentials' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-700'"
+                >
+                  Critères
+                </button>
+                <button 
+                  @click="activeTab = 'amenities'"
+                  class="px-6 py-2.5 text-[11px] font-black uppercase tracking-[0.1em] rounded-xl transition-all duration-300"
+                  :class="activeTab === 'amenities' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'"
+                >
+                  Équipements
+                </button>
+              </div>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="px-8 py-8 h-[450px] overflow-y-auto custom-scrollbar">
+              <transition
+                mode="out-in"
+                enter-active-class="transition duration-300 ease-out"
+                enter-from-class="opacity-0 translate-y-4"
+                enter-to-class="opacity-100 translate-y-0"
+                leave-active-class="transition duration-200 ease-in"
+                leave-from-class="opacity-100 translate-y-0"
+                leave-to-class="opacity-0 translate-y-4"
+              >
+                <!-- Essentials Tab -->
+                <div v-if="activeTab === 'essentials'" class="space-y-10">
+                  <!-- Type Grid -->
+                  <div class="space-y-4">
+                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Type de bien</label>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <button 
+                        v-for="type in ['house', 'apartment', 'villa', 'studio']" 
+                        :key="type"
+                        @click="searchFilters.type = type as any"
+                        :class="searchFilters.type === type ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white/5 border-white/10 text-slate-400'"
+                        class="py-3 px-2 rounded-2xl border text-xs font-bold transition-all hover:bg-white/10 capitalize"
+                      >
+                        {{ type }}
+                      </button>
+                    </div>
                   </div>
-                  <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">
-                      Prix maximum (CDF)
-                    </label>
-                    <input
-                      v-model.number="searchFilters.maxPrice"
-                      type="number"
-                      min="0"
-                      placeholder="Prix max"
-                      class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-base transition-all hover:border-gray-300"
-                    />
+
+                  <!-- Price & Area Row -->
+                  <div class="grid grid-cols-2 gap-8">
+                    <div class="space-y-4">
+                      <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Budget ($)</label>
+                      <div class="flex items-center space-x-2">
+                        <input v-model.number="searchFilters.minPrice" type="number" placeholder="Min" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-blue-500/50" />
+                        <span class="text-slate-700">-</span>
+                        <input v-model.number="searchFilters.maxPrice" type="number" placeholder="Max" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-blue-500/50" />
+                      </div>
+                    </div>
+                    <div class="space-y-4">
+                      <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Surface (m²)</label>
+                      <div class="flex items-center space-x-2">
+                        <input v-model.number="searchFilters.minArea" type="number" placeholder="Min" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-blue-500/50" />
+                        <span class="text-slate-700">-</span>
+                        <input v-model.number="searchFilters.maxArea" type="number" placeholder="Max" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-blue-500/50" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Specifics Grid -->
+                  <div class="space-y-8">
+                    <div v-for="kind in [{key: 'rooms', label: 'Pièces'}, {key: 'bedrooms', label: 'Chambres'}, {key: 'bathrooms', label: 'Bains'}]" :key="kind.key" class="space-y-4">
+                      <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">{{ kind.label }}</label>
+                      <div class="grid grid-cols-3 sm:flex sm:flex-wrap gap-2">
+                        <button 
+                          v-for="n in 6" :key="n"
+                          @click="(searchFilters as any)[kind.key] = n === 6 ? undefined : n"
+                          :class="(searchFilters as any)[kind.key] === (n === 6 ? undefined : n) ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' : 'bg-white/5 text-slate-500 border border-white/5'"
+                          class="h-10 rounded-xl font-bold text-xs transition-all hover:bg-white/10"
+                        >
+                          {{ n === 6 ? 'Tout' : (n === 5 ? '5+' : n) }}
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <!-- Characteristics -->
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2"> Pièces </label>
-                    <input
-                      v-model.number="searchFilters.rooms"
-                      type="number"
-                      min="0"
-                      placeholder="Toutes"
-                      class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-base transition-all hover:border-gray-300"
-                    />
-                  </div>
-                  <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2"> Chambres </label>
-                    <input
-                      v-model.number="searchFilters.bedrooms"
-                      type="number"
-                      min="0"
-                      placeholder="Toutes"
-                      class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-base transition-all hover:border-gray-300"
-                    />
-                  </div>
-                  <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">
-                      Salles de bain
-                    </label>
-                    <input
-                      v-model.number="searchFilters.bathrooms"
-                      type="number"
-                      min="0"
-                      placeholder="Toutes"
-                      class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-base transition-all hover:border-gray-300"
-                    />
-                  </div>
-                  <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2"> Parking </label>
-                    <input
-                      v-model.number="searchFilters.parking"
-                      type="number"
-                      min="0"
-                      placeholder="Tous"
-                      class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-base transition-all hover:border-gray-300"
-                    />
-                  </div>
-                </div>
-
-                <!-- Surface -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">
-                      Surface min (m²)
-                    </label>
-                    <input
-                      v-model.number="searchFilters.minArea"
-                      type="number"
-                      min="0"
-                      placeholder="Surface min"
-                      class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-base transition-all hover:border-gray-300"
-                    />
-                  </div>
-                  <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">
-                      Surface max (m²)
-                    </label>
-                    <input
-                      v-model.number="searchFilters.maxArea"
-                      type="number"
-                      min="0"
-                      placeholder="Surface max"
-                      class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-base transition-all hover:border-gray-300"
-                    />
-                  </div>
-                </div>
-
-                <!-- Features -->
-                <div>
-                  <label class="block text-sm font-semibold text-gray-700 mb-3">
-                    Caractéristiques
-                  </label>
-                  <div class="flex flex-wrap gap-2">
+                <!-- Amenities Tab -->
+                <div v-else class="space-y-6">
+                  <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Équipements & Services</label>
+                  <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     <button
                       v-for="feature in PROPERTY_FEATURES"
                       :key="feature"
                       @click="toggleFeature(feature)"
-                      type="button"
-                      class="px-5 py-2.5 text-sm font-semibold rounded-xl border-2 transition-all capitalize"
-                      :class="
-                        selectedFeatures.includes(feature)
-                          ? 'bg-blue-600 text-white border-blue-600 shadow-md'
-                          : 'bg-white text-gray-700 border-gray-300 hover:border-blue-500 hover:bg-blue-50'
-                      "
+                      class="px-4 py-4 text-[10px] font-bold text-left rounded-2xl border transition-all flex items-center space-x-3"
+                      :class="selectedFeatures.includes(feature) ? 'bg-blue-600/20 text-blue-400 border-blue-600/50' : 'bg-white/5 text-slate-500 border-white/5 hover:border-white/20'"
                     >
-                      {{ feature }}
+                      <div class="w-2 h-2 rounded-full" :class="selectedFeatures.includes(feature) ? 'bg-blue-400 pulse' : 'bg-slate-700'"></div>
+                      <span>{{ feature }}</span>
                     </button>
                   </div>
                 </div>
-              </div>
+              </transition>
+            </div>
 
-              <div class="flex items-center justify-end space-x-3 mt-6 pt-6 border-t">
-                <button
-                  @click="clearFilters"
-                  class="px-6 py-3 text-gray-700 font-semibold rounded-lg hover:bg-gray-100 transition-colors"
-                >
-                  Réinitialiser
-                </button>
-                <button
-                  @click="applyFiltersAndClose"
-                  class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors"
-                >
-                  Appliquer
-                </button>
-              </div>
+            <!-- Modal Footer -->
+            <div class="px-8 py-6 bg-white/[0.02] border-t border-white/5 flex items-center justify-between">
+              <button
+                @click="clearFilters"
+                class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 hover:text-white transition-colors"
+              >
+                Réinitialiser
+              </button>
+              <button
+                @click="applyFiltersAndClose"
+                class="px-10 py-4 bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl transition-all shadow-[0_15px_30px_-5px_rgba(37,99,235,0.4)] hover:scale-105 active:scale-95"
+              >
+                Voir les biens
+              </button>
             </div>
           </div>
         </div>
@@ -735,340 +593,159 @@ const selectLocation = (location: string) => {
 </template>
 
 <style scoped>
+
 .hero-section {
-  font-family:
-    'Roboto',
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
-  cursor:
-    url("data:image/svg+xml,%3Csvg width='24' height='24' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='12' cy='12' r='8' fill='%2310b981' opacity='0.8'/%3E%3Ccircle cx='12' cy='12' r='3' fill='white'/%3E%3C/svg%3E")
-      12 12,
-    auto;
+  font-family: 'Inter', sans-serif;
 }
 
-.hero-section button,
-.hero-section a,
-.hero-section input,
-.hero-section select {
-  cursor:
-    url("data:image/svg+xml,%3Csvg width='28' height='28' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='14' cy='14' r='10' fill='%2310b981' opacity='0.9'/%3E%3Ccircle cx='14' cy='14' r='4' fill='white'/%3E%3C/svg%3E")
-      14 14,
-    pointer;
+/* Glassmorphism 2.0 - Elite Multi-layered */
+.glass-card {
+  box-shadow: 
+    0 40px 100px -20px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    inset 0 0 20px rgba(255, 255, 255, 0.02);
+  transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
-/* Force default cursor in modal for better visibility */
-.modal-backdrop {
-  cursor: default !important;
+.glass-card:hover {
+  transform: translateY(-8px) scale(1.01);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 
+    0 60px 120px -20px rgba(0, 0, 0, 0.8),
+    0 0 0 1px rgba(59, 130, 246, 0.3);
 }
 
-.modal-filters,
-.modal-filters * {
-  cursor: auto !important;
-}
-
-.modal-filters button,
-.modal-filters a,
-.modal-filters input,
-.modal-filters select,
-.modal-filters textarea {
-  cursor: pointer !important;
-}
-
-.modal-filters input[type='text'],
-.modal-filters input[type='number'],
-.modal-filters textarea {
-  cursor: text !important;
-}
-
-/* Animations */
+/* Ken Burns Elite */
 @keyframes ken-burns {
-  0% {
-    transform: scale(1);
-  }
-  100% {
-    transform: scale(1.1);
-  }
+  0% { transform: scale(1) translate(0, 0); }
+  100% { transform: scale(1.15) translate(-1%, -1%); }
 }
 
 .animate-ken-burns {
-  animation: ken-burns 20s ease-in-out infinite alternate;
+  animation: ken-burns 60s linear infinite alternate;
 }
 
-@keyframes float-delayed {
-  0%,
-  100% {
-    transform: translate(0, 0) scale(1);
-  }
-  33% {
-    transform: translate(30px, -30px) scale(1.1);
-  }
-  66% {
-    transform: translate(-20px, 20px) scale(0.9);
-  }
+/* Grid Animation */
+@keyframes grid-slide {
+  from { background-position: 0 0; }
+  to { background-position: 120px 120px; }
 }
 
-.animate-float-delayed {
-  animation: float-delayed 25s ease-in-out infinite;
-  animation-delay: 2s;
+.animate-grid-slide {
+  animation: grid-slide 20s linear infinite;
 }
 
-@keyframes bounce-slow {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-20px);
-  }
+/* Horizontal Line Slide */
+@keyframes line-slide-horizontal {
+  0% { transform: translateX(-100%); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateX(100%); opacity: 0; }
 }
 
-.animate-bounce-slow {
-  animation: bounce-slow 3s ease-in-out infinite;
+.animate-line-slide-horizontal {
+  animation: line-slide-horizontal 20s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
-@keyframes ping-slow {
-  0% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  75%,
-  100% {
-    transform: scale(2);
-    opacity: 0;
-  }
+/* Gradient Slide for Button */
+@keyframes gradient-slide {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
-.animate-ping-slow {
-  animation: ping-slow 3s cubic-bezier(0, 0, 0.2, 1) infinite;
+.animate-gradient-slide {
+  background-size: 200% 200%;
+  animation: gradient-slide 3s ease infinite;
 }
 
-@keyframes pulse-slow {
-  0%,
-  100% {
-    opacity: 0.3;
-  }
-  50% {
-    opacity: 0.6;
-  }
+/* Shimmer Animation */
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
 }
 
-.animate-pulse-slow {
-  animation: pulse-slow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+.animate-shimmer {
+  background-size: 200% auto;
+  animation: shimmer 8s linear infinite;
 }
 
-@keyframes slide-down {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-slide-down {
-  animation: slide-down 0.6s ease-out;
-}
-
-@keyframes slide-right {
-  from {
-    opacity: 0;
-    transform: translateX(-30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.animate-slide-right {
-  animation: slide-right 0.8s ease-out;
-}
-
-@keyframes slide-left {
-  from {
-    opacity: 0;
-    transform: translateX(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.animate-slide-left {
-  animation: slide-left 0.8s ease-out;
-}
-
-@keyframes scale-in {
-  from {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.animate-scale-in {
-  animation: scale-in 0.6s ease-out;
-}
-
-/* Animation delays */
-.animation-delay-200 {
-  animation-delay: 0.2s;
-  animation-fill-mode: backwards;
-}
-
-.animation-delay-400 {
-  animation-delay: 0.4s;
-  animation-fill-mode: backwards;
-}
-
-.animation-delay-600 {
-  animation-delay: 0.6s;
-  animation-fill-mode: backwards;
-}
-
-.animation-delay-800 {
-  animation-delay: 0.8s;
-  animation-fill-mode: backwards;
-}
-
-.animation-delay-1000 {
-  animation-delay: 1s;
-  animation-fill-mode: backwards;
-}
-
-/* Typing Effect Animation - Ultra Modern */
-.typing-text {
-  display: inline-block;
-  position: relative;
-  color: #ffffff;
-  font-weight: 700;
-  text-shadow:
-    0 0 30px rgba(255, 255, 255, 0.8),
-    0 0 60px rgba(255, 255, 255, 0.6),
-    0 2px 10px rgba(0, 0, 0, 0.3);
-  animation: text-glow-white 2s ease-in-out infinite;
-}
-
-@keyframes text-gradient {
-  0%,
-  100% {
-    background-position: 0% center;
-  }
-  50% {
-    background-position: 100% center;
-  }
-}
-
-@keyframes text-glow {
-  0%,
-  100% {
-    filter: drop-shadow(0 0 15px rgba(25, 118, 210, 0.5))
-      drop-shadow(0 0 30px rgba(25, 118, 210, 0.3));
-  }
-  50% {
-    filter: drop-shadow(0 0 25px rgba(25, 118, 210, 0.7))
-      drop-shadow(0 0 40px rgba(25, 118, 210, 0.5));
-  }
-}
-
-@keyframes text-glow-white {
-  0%,
-  100% {
-    text-shadow:
-      0 0 30px rgba(255, 255, 255, 0.8),
-      0 0 60px rgba(255, 255, 255, 0.6),
-      0 2px 10px rgba(0, 0, 0, 0.3);
-  }
-  50% {
-    text-shadow:
-      0 0 40px rgba(255, 255, 255, 1),
-      0 0 80px rgba(255, 255, 255, 0.8),
-      0 2px 15px rgba(0, 0, 0, 0.4);
-  }
-}
-
+/* Typing Cursor */
 .typing-cursor {
   display: inline-block;
-  margin-left: 5px;
   width: 3px;
-  height: 1em;
-  background: linear-gradient(
-    to bottom,
-    transparent 0%,
-    #2196f3 20%,
-    #1976d2 50%,
-    #2196f3 80%,
-    transparent 100%
-  );
-  animation:
-    blink 1s step-end infinite,
-    cursor-glow 1.5s ease-in-out infinite;
-  box-shadow:
-    0 0 10px rgba(25, 118, 210, 0.6),
-    0 0 20px rgba(25, 118, 210, 0.4);
-  border-radius: 1px;
+  height: 0.8em;
+  background-color: #3b82f6;
+  margin-left: 4px;
+  animation: blink 1s step-end infinite;
+  vertical-align: middle;
 }
 
 @keyframes blink {
-  0%,
-  49% {
-    opacity: 1;
-  }
-  50%,
-  100% {
-    opacity: 0;
-  }
+  from, to { opacity: 1; }
+  50% { opacity: 0; }
 }
 
-@keyframes cursor-glow {
-  0%,
-  100% {
-    box-shadow:
-      0 0 10px rgba(25, 118, 210, 0.6),
-      0 0 20px rgba(25, 118, 210, 0.4);
-  }
-  50% {
-    box-shadow:
-      0 0 20px rgba(25, 118, 210, 0.8),
-      0 0 30px rgba(25, 118, 210, 0.6),
-      0 0 40px rgba(25, 118, 210, 0.4);
-  }
+/* Premium Animations */
+.animate-fade-in {
+  animation: fade-in 1.2s cubic-bezier(0.23, 1, 0.32, 1) forwards;
 }
 
-/* Animation d'apparition des lettres */
-@keyframes letter-pop {
-  0% {
-    transform: scale(0.8);
-    opacity: 0;
-  }
-  50% {
-    transform: scale(1.1);
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* Responsive cursor */
-@media (max-width: 768px) {
-  .hero-section {
-    cursor: default;
-  }
+.animate-pulse-slow {
+  animation: pulse-slow 10s ease-in-out infinite;
+}
 
-  .hero-section button,
-  .hero-section a,
-  .hero-section input,
-  .hero-section select {
-    cursor: pointer;
-  }
+@keyframes pulse-slow {
+  0%, 100% { transform: scale(1); opacity: 0.4; }
+  50% { transform: scale(1.1); opacity: 0.6; }
+}
+
+.animation-delay-600 { animation-delay: 0.6s; }
+.animation-delay-800 { animation-delay: 0.8s; }
+.animation-delay-1000 { animation-delay: 1s; }
+.animation-delay-2000 { animation-delay: 2s; }
+.animation-delay-4000 { animation-delay: 4s; }
+
+/* Custom Select Reset for Glassmorphism */
+select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-position: right 1.25rem center;
+  background-repeat: no-repeat;
+  background-size: 1.2em 1.2em;
+}
+
+/* Pulse Animation */
+@keyframes pulse-soft {
+  0% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.5); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.5; }
+}
+
+.pulse {
+  animation: pulse-soft 2s infinite ease-in-out;
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+/* Mobile Cursor Override */
+@media (max-width: 1024px) {
+  .hero-section { cursor: default !important; }
 }
 </style>

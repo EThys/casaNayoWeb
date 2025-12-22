@@ -32,7 +32,12 @@ const onEnter = (el: Element, done: () => void) => {
     element.style.opacity = '1'
     element.style.transform = 'translateY(0) scale(1)'
     
-    setTimeout(done, 600)
+    setTimeout(() => {
+      // Clear transition styles to avoid breaking fixed positioning
+      element.style.transform = ''
+      element.style.transition = ''
+      done()
+    }, 600)
   })
 }
 

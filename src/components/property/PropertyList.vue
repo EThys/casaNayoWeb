@@ -37,11 +37,11 @@ const filteredProperties = computed(() => {
   }
 
   if (props.filters.bedrooms !== undefined) {
-    result = result.filter((p) => p.bedrooms >= props.filters.bedrooms!)
+    result = result.filter((p) => (p.bedrooms ?? 0) >= (props.filters.bedrooms ?? 0))
   }
 
   if (props.filters.bathrooms !== undefined) {
-    result = result.filter((p) => p.bathrooms >= props.filters.bathrooms!)
+    result = result.filter((p) => (p.bathrooms ?? 0) >= (props.filters.bathrooms ?? 0))
   }
 
   return result

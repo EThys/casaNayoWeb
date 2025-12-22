@@ -87,7 +87,7 @@
         <label class="block text-sm font-semibold text-gray-700 mb-2">
           Points d'apprentissage
         </label>
-        <div v-for="(point, index) in formData.learning_points" :key="index" class="flex gap-2 mb-2">
+        <div v-if="formData.learning_points" v-for="(point, index) in formData.learning_points" :key="index" class="flex gap-2 mb-2">
           <input
             v-model="formData.learning_points[index]"
             type="text"
@@ -116,7 +116,7 @@
         <label class="block text-sm font-semibold text-gray-700 mb-2">
           Points clés
         </label>
-        <div v-for="(point, index) in formData.key_points" :key="index" class="flex gap-2 mb-2">
+        <div v-if="formData.key_points" v-for="(point, index) in formData.key_points" :key="index" class="flex gap-2 mb-2">
           <input
             v-model="formData.key_points[index]"
             type="text"
@@ -351,10 +351,10 @@ const handleSubmit = async () => {
 
     // Remove undefined values to avoid sending empty fields
     const cleanedData: UpdateActualityRequest = {}
-    Object.keys(updateData).forEach((key) => {
-      const value = updateData[key as keyof UpdateActualityRequest]
+    ;(Object.keys(updateData) as (keyof UpdateActualityRequest)[]).forEach((key) => {
+      const value = updateData[key]
       if (value !== undefined && value !== null && value !== '') {
-        cleanedData[key as keyof UpdateActualityRequest] = value
+        ;(cleanedData as any)[key] = value
       }
     })
 

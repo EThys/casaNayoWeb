@@ -4,14 +4,18 @@ import { useRoute, useRouter } from 'vue-router'
 import MainLayout from '@/layouts/MainLayout.vue'
 import VisitRequestModal from '@/components/property/VisitRequestModal.vue'
 import { PROPERTY_TYPE_LABELS } from '@/types/property'
-import { findPropertyById } from '@/data/mockData'
+import { fetchPropertyById } from '@/services/api'
+import { transformApiPropertyToProperty } from '@/utils/propertyTransformer'
+import type { Property } from '@/types/property'
 
 const route = useRoute()
 const router = useRouter()
-const property = ref(findPropertyById(route.params.id as string) || null)
+const property = ref<Property | null>(null)
 const currentImageIndex = ref(0)
 const isFavorite = ref(false)
+const isSharing = ref(false)
 const isLoading = ref(true)
+const error = ref<string | null>(null)
 const showVisitModal = ref(false)
 
 const formatPrice = (price: number): string => {
@@ -41,12 +45,46 @@ const goToImage = (index: number) => {
   currentImageIndex.value = index
 }
 
-onMounted(() => {
-  if (!property.value) {
-    // Rediriger vers la page d'accueil si la propriété n'existe pas
-    router.push('/')
+const handleShare = async () => {
+  try {
+    if (navigator.share) {
+      await navigator.share({
+        title: property.value?.title,
+        text: property.value?.description,
+        url: window.location.href,
+      })
+    } else {
+      await navigator.clipboard.writeText(window.location.href)
+      alert('Lien copié dans le presse-papier !')
+    }
+  } catch (err) {
+    console.error('Erreur lors du partage:', err)
   }
-  isLoading.value = false
+}
+
+// Load property from API
+const loadProperty = async () => {
+  try {
+    isLoading.value = true
+    error.value = null
+    const propertyId = parseInt(route.params.id as string)
+    
+    if (isNaN(propertyId)) {
+      throw new Error('ID de propriété invalide')
+    }
+
+    const apiProperty = await fetchPropertyById(propertyId)
+    property.value = transformApiPropertyToProperty(apiProperty)
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Erreur lors du chargement de la propriété'
+    console.error('Error loading property:', err)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(() => {
+  loadProperty()
 })
 </script>
 
@@ -60,97 +98,150 @@ onMounted(() => {
       </div>
     </div>
 
+    <div v-else-if="error" class="flex items-center justify-center min-h-screen">
+      <div class="text-center">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="w-16 h-16 text-red-400 mx-auto mb-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+        <h3 class="text-xl font-semibold text-gray-900 mb-2">Erreur de chargement</h3>
+        <p class="text-gray-600 mb-4">{{ error }}</p>
+        <button
+          @click="loadProperty"
+          class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors mr-2"
+        >
+          Réessayer
+        </button>
+        <button
+          @click="router.push('/properties')"
+          class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+        >
+          Retour aux propriétés
+        </button>
+      </div>
+    </div>
+
     <div v-else-if="property">
-      <!-- Image Gallery -->
-      <div class="relative h-[500px] lg:h-[600px] overflow-hidden bg-gray-900">
+      <!-- Image Gallery Section -->
+      <div class="relative h-[550px] lg:h-[650px] overflow-hidden bg-gray-950">
+        <!-- Main Images -->
         <div class="relative w-full h-full">
           <img
             v-for="(image, index) in property.images"
             :key="`img-${index}`"
             :src="image"
             :alt="`${property.title} - Image ${index + 1}`"
-            class="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
+            class="absolute inset-0 w-full h-full object-cover transition-all duration-1000 ease-in-out"
             :class="{
-              'opacity-100 z-10': currentImageIndex === index,
-              'opacity-0 z-0': currentImageIndex !== index,
+              'opacity-100 z-10 scale-100': currentImageIndex === index,
+              'opacity-0 z-0 scale-110 blur-sm': currentImageIndex !== index,
             }"
           />
+          <!-- Dark overlay for better text contrast at top -->
+          <div class="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-black/60 to-transparent z-20 pointer-events-none"></div>
         </div>
 
-        <!-- Navigation Buttons -->
-        <button
-          v-if="property.images.length > 1"
-          @click="prevImage"
-          class="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-all z-20"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="w-6 h-6 text-gray-700"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
-        <button
-          v-if="property.images.length > 1"
-          @click="nextImage"
-          class="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-all z-20"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="w-6 h-6 text-gray-700"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
+        <!-- Top Overlay: Category only -->
+        <div class="absolute top-8 left-0 right-0 px-6 sm:px-10 flex justify-between items-start z-40 pointer-events-none">
+          <div class="flex items-center gap-4 pointer-events-auto">
+            <div 
+              v-if="property"
+              class="px-5 py-2.5 bg-blue-600/90 backdrop-blur-lg rounded-full text-[10px] font-black uppercase tracking-[0.2em] text-white shadow-2xl shadow-blue-500/40 border border-white/20 flex items-center gap-2"
+            >
+              <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+              {{ PROPERTY_TYPE_LABELS[property.type] }}
+            </div>
+          </div>
+        </div>
 
-        <!-- Image Indicators -->
-        <div
-          v-if="property.images.length > 1"
-          class="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2 z-20"
-        >
+        <!-- Bottom Left: Navigation Buttons -->
+        <div class="absolute bottom-8 left-6 sm:left-10 flex items-center gap-3 z-40">
           <button
-            v-for="(img, index) in property.images"
-            :key="index"
-            @click="goToImage(index)"
-            class="transition-all duration-300 rounded-full"
-            :class="
-              currentImageIndex === index
-                ? 'w-8 h-2 bg-white shadow-lg'
-                : 'w-2 h-2 bg-white/60 hover:bg-white/80'
-            "
-          ></button>
+            @click="router.back()"
+            class="w-12 h-12 bg-black/40 backdrop-blur-xl border border-white/20 rounded-full flex items-center justify-center text-white shadow-2xl hover:bg-white/20 active:scale-95 transition-all group"
+            title="Retour"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 transform group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          
+          <div class="h-8 w-[1px] bg-white/20 mx-1"></div>
+
+          <button
+            @click="handleShare"
+            class="w-12 h-12 bg-black/40 backdrop-blur-xl border border-white/20 rounded-full flex items-center justify-center text-white shadow-2xl hover:bg-white/20 active:scale-95 transition-all"
+            title="Partager"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+            </svg>
+          </button>
+
+          <button
+            @click="isFavorite = !isFavorite"
+            class="w-12 h-12 backdrop-blur-xl border rounded-full flex items-center justify-center shadow-2xl transition-all active:scale-90 overflow-hidden relative group/fav"
+            :class="isFavorite ? 'bg-red-500 border-red-400 text-white' : 'bg-black/40 border-white/20 text-white hover:bg-white/20'"
+            title="Favoris"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="w-6 h-6 transition-all duration-300 transform group-hover/fav:scale-110"
+              :fill="isFavorite ? 'currentColor' : 'none'"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2.3"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+            </svg>
+          </button>
         </div>
 
-        <!-- Favorite Button -->
-        <button
-          @click="isFavorite = !isFavorite"
-          class="absolute top-4 right-4 w-12 h-12 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-all z-20"
-          :class="{ 'bg-blue-600': isFavorite }"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="w-6 h-6 transition-colors"
-            :class="isFavorite ? 'text-white' : 'text-gray-700'"
-            :fill="isFavorite ? 'currentColor' : 'none'"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="2"
+        <!-- Image Gallery Controls -->
+        <div v-if="property.images.length > 1">
+          <!-- Navigation Arrows -->
+          <button
+            @click="prevImage"
+            class="absolute left-6 top-1/2 -translate-y-1/2 w-14 h-14 bg-white/10 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white shadow-2xl hover:bg-white/20 transition-all z-30 active:scale-95 group"
           >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-            />
-          </svg>
-        </button>
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 transform group-hover:-translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <button
+            @click="nextImage"
+            class="absolute right-6 top-1/2 -translate-y-1/2 w-14 h-14 bg-white/10 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white shadow-2xl hover:bg-white/20 transition-all z-30 active:scale-95 group"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 transform group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+
+          <!-- Indicators -->
+          <div class="absolute bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-3 z-30 px-5 py-3 bg-black/30 backdrop-blur-xl rounded-full border border-white/10 shadow-2xl">
+            <button
+              v-for="(img, index) in property.images"
+              :key="index"
+              @click="goToImage(index)"
+              class="transition-all duration-500 rounded-full"
+              :class="
+                currentImageIndex === index
+                  ? 'w-10 h-1.5 bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.6)]'
+                  : 'w-1.5 h-1.5 bg-white/30 hover:bg-white/60'
+              "
+            ></button>
+          </div>
+        </div>
       </div>
 
       <!-- Content -->

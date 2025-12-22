@@ -18,6 +18,10 @@ interface ServiceCategory {
   services: Service[]
 }
 
+const props = defineProps<{
+  variant?: 'white' | 'blue'
+}>()
+
 const serviceCategories: ServiceCategory[] = [
   { id: 'plumber', name: 'Plomberie', services: plumberServices },
   { id: 'electrician', name: 'Électricité', services: electricianServices },
@@ -33,374 +37,241 @@ const selectedCategory = ref<string>('plumber')
 
 const currentServices = computed(() => {
   const category = serviceCategories.find((c) => c.id === selectedCategory.value)
-  return category ? category.services : []
+  // Limit to 4 services as requested
+  return category ? category.services.slice(0, 4) : []
 })
 
-// Scroll reveal animation
-let observer: IntersectionObserver | null = null
+const mousePosition = ref({ x: 0, y: 0 })
+const sectionRef = ref<HTMLElement | null>(null)
+
+const handleMouseMove = (e: MouseEvent) => {
+  if (!sectionRef.value) return
+  const rect = sectionRef.value.getBoundingClientRect()
+  mousePosition.value = {
+    x: e.clientX - rect.left,
+    y: e.clientY - rect.top,
+  }
+}
 
 onMounted(() => {
-  observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('is-visible')
-        }
-      })
-    },
-    {
-      threshold: 0.1,
-      rootMargin: '0px 0px -50px 0px',
-    },
-  )
-
-  // Observer tous les éléments avec scroll-reveal
-  const elements = document.querySelectorAll('.scroll-reveal')
-  elements.forEach((el) => observer?.observe(el))
+  window.addEventListener('mousemove', handleMouseMove)
 })
 
 onUnmounted(() => {
-  observer?.disconnect()
+  window.removeEventListener('mousemove', handleMouseMove)
 })
 </script>
 
 <template>
   <section
-    class="py-20 bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50 relative overflow-hidden"
+    ref="sectionRef"
+    :class="[
+      'py-20 lg:py-24 relative overflow-hidden transition-all duration-1000',
+      variant === 'blue' ? 'bg-[#1976D2] border-t border-white/5' : 'bg-slate-50/50'
+    ]"
   >
-    <!-- Decorative Background Elements -->
-    <div class="absolute inset-0 overflow-hidden pointer-events-none">
-      <div class="absolute top-20 right-20 w-96 h-96 bg-blue-400/5 rounded-full blur-3xl"></div>
-      <div class="absolute bottom-20 left-20 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl"></div>
+    <!-- Background Decor - Refined Style -->
+    <div class="absolute inset-0 z-0 pointer-events-none">
+      <template v-if="variant === 'white'">
+        <!-- Soft Mesh Gradient -->
+        <div class="absolute inset-0 opacity-40">
+          <div class="absolute top-[-10%] right-[-10%] w-[60%] h-[60%] bg-blue-50 rounded-full blur-[120px] animate-pulse-slow"></div>
+          <div class="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-white rounded-full blur-[150px] animate-pulse-slow"></div>
+        </div>
+      </template>
+      <template v-else>
+        <!-- Blue Style Decor -->
+        <div class="absolute inset-0">
+          <img 
+            src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1600&q=80" 
+            class="w-full h-full object-cover opacity-20 mix-blend-overlay scale-110"
+            alt="Professional services background"
+          />
+          <div class="absolute inset-0 bg-gradient-to-br from-[#1976D2]/95 via-[#1976D2]/90 to-[#1976D2]/95"></div>
+        </div>
+        <div class="absolute inset-0 opacity-[0.05]"
+             style="background-image: linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px); background-size: 80px 80px;">
+        </div>
+      </template>
     </div>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-      <!-- Section Header - Enhanced with Button on Right -->
+      <!-- Standardized Header -->
       <div
-        class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 mb-16 scroll-reveal"
+        class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 mb-16"
+        v-motion
+        :initial="{ opacity: 0, y: 50 }"
+        :visibleOnce="{ opacity: 1, y: 0, transition: { duration: 800 } }"
       >
-        <!-- Left Side - Text -->
-        <div class="flex-1">
+        <div class="flex-1 space-y-4">
           <h2
-            class="text-4xl sm:text-5xl font-bold text-gray-900 mb-4 animate-fade-in-up"
-            style="font-family: 'Poppins', sans-serif"
+            :class="[
+              'text-4xl md:text-6xl font-black tracking-tighter leading-tight',
+              variant === 'white' ? 'text-slate-900' : 'text-white'
+            ]"
           >
-            Services Professionnels
+            Services <br class="md:hidden" />
+            <span :class="variant === 'white' ? 'text-[#1976D2]' : 'text-white/80'">Professionnels</span>
           </h2>
           <p
-            class="text-xl text-gray-600 max-w-3xl leading-relaxed animate-fade-in animation-delay-200"
+            :class="[
+              'text-lg md:text-xl max-w-2xl font-light leading-relaxed',
+              variant === 'white' ? 'text-slate-500' : 'text-blue-50'
+            ]"
           >
-            Trouvez les <span class="text-blue-600 font-semibold">meilleurs professionnels</span> de
-            l'immobilier en République Démocratique du Congo
+            Accédez à une sélection de prestataires qualifiés pour tous vos besoins immobiliers.
           </p>
         </div>
 
-        <!-- Right Side - View All Button -->
-        <div class="lg:pb-2">
+        <!-- View All Link Moved Here -->
+        <div class="flex-shrink-0">
           <router-link
             to="/services"
-            class="view-all-professionals inline-flex items-center space-x-3 px-6 py-3 bg-white hover:bg-blue-600 text-gray-900 font-bold rounded-xl transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-blue-500/50 border-2 border-gray-200 hover:border-blue-600 transform hover:scale-105 group whitespace-nowrap"
+            :class="[
+              'inline-flex items-center space-x-3 px-8 py-4 font-black uppercase tracking-widest text-[10px] rounded-full border transition-all duration-500 active:scale-95 group',
+              variant === 'white'
+                ? 'bg-slate-900 text-white border-slate-900 hover:bg-[#1976D2] hover:border-[#1976D2]'
+                : 'bg-white text-[#1976D2] border-white hover:bg-blue-50'
+            ]"
           >
-            <span class="relative z-10">Voir tous les professionnels</span>
-            <svg
-              class="w-5 h-5 transform group-hover:translate-x-2 transition-transform duration-300"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M17 8l4 4m0 0l-4 4m4-4H3"
-              />
+            <span>Voir tous les services</span>
+            <svg class="w-4 h-4 transform group-hover:translate-x-2 transition-transform duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
             </svg>
           </router-link>
         </div>
       </div>
 
-      <!-- Tabs Navigation - Enhanced -->
-      <div class="mb-12 scroll-reveal animation-delay-400">
-        <div class="bg-white rounded-2xl shadow-lg p-2 border border-gray-200">
-          <nav class="flex space-x-2 overflow-x-auto scrollbar-hide" aria-label="Services">
-            <button
-              v-for="category in serviceCategories"
-              :key="category.id"
-              @click="selectedCategory = category.id"
-              class="whitespace-nowrap py-3 px-5 rounded-xl font-semibold text-sm transition-all duration-300 flex items-center space-x-2 group relative overflow-hidden"
-              :class="{
-                'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/30 scale-105':
-                  selectedCategory === category.id,
-                'text-gray-600 hover:text-blue-600 hover:bg-blue-50':
-                  selectedCategory !== category.id,
-              }"
+      <!-- Scrollable Category Selector -->
+      <div 
+        class="mb-12"
+        v-motion
+        :initial="{ opacity: 0, scale: 0.95 }"
+        :visibleOnce="{ opacity: 1, scale: 1, transition: { delay: 200 } }"
+      >
+        <nav class="flex items-center space-x-4 overflow-x-auto scrollbar-hide pb-4 -mx-4 px-4 lg:mx-0 lg:px-0" aria-label="Services">
+          <button
+            v-for="category in serviceCategories"
+            :key="category.id"
+            @click="selectedCategory = category.id"
+            :class="[
+              'whitespace-nowrap px-8 py-3 rounded-full font-black text-xs uppercase tracking-widest transition-all duration-500 flex items-center space-x-3 active:scale-95 border',
+              selectedCategory === category.id
+                ? (variant === 'white' 
+                    ? 'bg-slate-900 border-slate-900 text-white shadow-xl' 
+                    : 'bg-white border-white text-[#1976D2] shadow-xl')
+                : (variant === 'white'
+                    ? 'bg-white border-slate-100 text-slate-400 hover:border-slate-300 hover:text-slate-600'
+                    : 'bg-white/10 border-white/10 text-white/60 hover:bg-white/20 hover:text-white')
+            ]"
+          >
+            <span>{{ category.name }}</span>
+            <span 
+              class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black"
+              :class="selectedCategory === category.id
+                ? (variant === 'white' ? 'bg-white/20 text-white' : 'bg-[#1976D2]/10 text-[#1976D2]')
+                : (variant === 'white' ? 'bg-slate-50 text-slate-400' : 'bg-white/5 text-white/40')"
             >
-              <span class="relative z-10">{{ category.name }}</span>
-              <span
-                class="relative z-10 px-2 py-0.5 rounded-full text-xs font-bold transition-all"
-                :class="{
-                  'bg-white/20 text-white': selectedCategory === category.id,
-                  'bg-gray-100 text-gray-600 group-hover:bg-blue-100 group-hover:text-blue-700':
-                    selectedCategory !== category.id,
-                }"
-              >
-                {{ category.services.length }}
-              </span>
-              <!-- Hover Effect Background -->
-              <div
-                v-if="selectedCategory !== category.id"
-                class="absolute inset-0 bg-gradient-to-r from-blue-50 to-blue-100 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"
-              ></div>
-            </button>
-          </nav>
-        </div>
+              {{ category.services.length }}
+            </span>
+          </button>
+        </nav>
       </div>
 
-      <!-- Services Display - Enhanced with Transition -->
-      <TransitionGroup
-        name="service-cards"
-        tag="div"
-        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-      >
-        <router-link
-          v-for="(service, index) in currentServices.slice(0, 3)"
-          :key="`${selectedCategory}-${service.id}-${index}`"
-          :to="`/service/${service.id}`"
-          class="card-shimmer bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100 group hover:-translate-y-2 block"
-          :style="{ transitionDelay: `${index * 100}ms` }"
+      <!-- Horizontal Row Display -->
+      <div class="relative group">
+        <TransitionGroup
+          name="service-row"
+          tag="div"
+          class="flex space-x-6 lg:space-x-8 overflow-x-auto scrollbar-hide pb-12 -mx-4 px-4 lg:mx-0 lg:px-0"
         >
-          <div class="flex flex-col h-full">
-            <!-- Service Image with Overlay -->
-            <div class="relative h-56 overflow-hidden">
+          <router-link
+            v-for="(service, index) in currentServices"
+            :key="`${selectedCategory}-${service.id}-${index}`"
+            :to="`/service/${service.id}`"
+            class="flex-shrink-0 w-[300px] md:w-[350px] lg:w-[400px] relative rounded-[40px] overflow-hidden group/card"
+            v-motion
+            :initial="{ opacity: 0, x: 50 }"
+            :visibleOnce="{ 
+              opacity: 1, 
+              x: 0, 
+              transition: { 
+                delay: index * 100,
+                type: 'spring',
+                stiffness: 100,
+                damping: 15
+              } 
+            }"
+            :hovered="{ 
+              y: -15, 
+              scale: 1.02,
+              transition: { type: 'spring', stiffness: 300 } 
+            }"
+          >
+            <!-- Card Image -->
+            <div class="aspect-[4/5] relative overflow-hidden rounded-[40px]">
               <img
                 :src="service.images[0]"
                 :alt="service.title"
-                class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                class="w-full h-full object-cover transition-transform duration-1000 group-hover/card:scale-110"
               />
-              <!-- Gradient Overlay -->
-              <div
-                class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-60 group-hover:opacity-40 transition-opacity duration-300"
-              ></div>
-
-              <!-- Rating Badge -->
-              <div
-                class="absolute top-4 left-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-2 rounded-xl shadow-xl backdrop-blur-sm bg-opacity-90 transform group-hover:scale-110 transition-transform duration-300"
-              >
-                <div class="flex items-center space-x-1.5">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="w-5 h-5 text-yellow-300"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-                    />
-                  </svg>
-                  <span class="text-base font-bold">{{ service.rating }}</span>
-                  <span class="text-sm opacity-90">({{ service.reviews }})</span>
-                </div>
-              </div>
-
-              <!-- Verified Badge -->
-              <div
-                class="absolute top-4 right-4 bg-white/90 backdrop-blur-sm text-green-600 px-3 py-1.5 rounded-lg shadow-lg flex items-center space-x-1"
-              >
-                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    fill-rule="evenodd"
-                    d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                    clip-rule="evenodd"
-                  />
-                </svg>
-                <span class="text-xs font-bold">Vérifié</span>
-              </div>
-            </div>
-
-            <!-- Service Info -->
-            <div class="p-6 flex-1 flex flex-col">
-              <h3
-                class="text-xl font-bold text-gray-900 mb-3 truncate group-hover:text-blue-600 transition-colors duration-300"
-                style="font-family: 'Inter', sans-serif"
-                :title="service.title"
-              >
-                {{ service.title }}
-              </h3>
-              <p class="text-sm text-gray-600 mb-5 line-clamp-2 flex-1 leading-relaxed">
-                {{ service.description }}
-              </p>
-
-              <!-- Location & Availability -->
-              <div class="space-y-3 mb-5">
-                <div
-                  class="flex items-center text-sm text-gray-700 bg-gray-50 px-3 py-2 rounded-lg"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="w-5 h-5 mr-2 text-blue-600 flex-shrink-0"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                    />
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
-                  </svg>
-                  <span class="font-medium">{{ service.location }}</span>
-                </div>
-                <div
-                  v-if="service.availability"
-                  class="flex items-center text-sm text-gray-700 bg-green-50 px-3 py-2 rounded-lg"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="w-5 h-5 mr-2 text-green-600 flex-shrink-0"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                  <span class="font-medium">{{ service.availability }}</span>
-                </div>
-              </div>
-
-              <!-- Features -->
-              <div class="flex flex-wrap gap-2 mb-5">
-                <span
-                  v-for="feature in service.features.slice(0, 4)"
-                  :key="feature"
-                  class="px-3 py-1.5 bg-blue-50 text-blue-700 text-xs font-semibold rounded-lg border border-blue-100"
-                >
-                  {{ feature }}
-                </span>
-              </div>
-
-              <!-- Price & Contact -->
-              <div class="flex items-center justify-between pt-5 border-t border-gray-100">
-                <div>
-                  <div class="flex items-baseline space-x-1">
-                    <span class="text-sm text-gray-500 font-medium">À partir de</span>
-                    <span
-                      class="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent"
-                      >{{ service.price }}</span
-                    >
-                    <span class="text-lg text-gray-600 font-semibold">$</span>
+              <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent opacity-80 group-hover/card:opacity-60 transition-opacity duration-700"></div>
+              
+              <!-- Content Overlay -->
+              <div class="absolute inset-0 p-8 flex flex-col justify-end">
+                <div class="space-y-4 transform transition-transform duration-700 group-hover/card:translate-y-[-10px]">
+                  <div class="flex items-center justify-between">
+                    <span class="px-4 py-1.5 bg-white/10 backdrop-blur-xl border border-white/20 rounded-full text-[9px] font-black uppercase tracking-widest text-white">
+                      {{ service.location }}
+                    </span>
+                    <div class="flex items-center space-x-1">
+                      <svg class="w-3 h-3 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                      <span class="text-white text-xs font-bold">{{ service.rating }}</span>
+                    </div>
                   </div>
-                  <div class="text-xs text-gray-500 font-medium mt-1">Tarif selon prestation</div>
+                  
+                  <h3 class="text-2xl lg:text-3xl font-black text-white tracking-tighter leading-tight group-hover/card:text-blue-200 transition-colors">
+                    {{ service.title }}
+                  </h3>
+                  
+                  <div class="flex items-center justify-between pt-4 border-t border-white/10">
+                    <div class="flex flex-col">
+                       <span class="text-white/40 text-[8px] font-black uppercase tracking-widest">À partir de</span>
+                       <span class="text-2xl font-black text-white">${{ service.price }}</span>
+                    </div>
+                    
+                    <div class="w-12 h-12 rounded-full bg-white text-slate-900 flex items-center justify-center shadow-xl group-hover/card:scale-110 transition-all duration-500">
+                       <svg class="w-5 h-5 transform rotate-[-45deg] transition-transform duration-500 group-hover/card:rotate-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                       </svg>
+                    </div>
+                  </div>
                 </div>
-                <button
-                  @click.prevent.stop
-                  class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/50 transform hover:scale-105 flex items-center space-x-2 group"
-                >
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
-                    />
-                  </svg>
-                  <span>Voir détails</span>
-                </button>
               </div>
             </div>
-          </div>
-        </router-link>
-      </TransitionGroup>
+          </router-link>
+        </TransitionGroup>
+      </div>
     </div>
   </section>
 </template>
 
 <style scoped>
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-/* Hide scrollbar for Chrome, Safari and Opera */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
 
-/* Hide scrollbar for IE, Edge and Firefox */
 .scrollbar-hide {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-/* Smooth scroll for tab navigation */
-.scrollbar-hide {
-  scroll-behavior: smooth;
-}
-
-/* Animation delays */
-.animation-delay-100 {
-  animation-delay: 0.1s;
-}
-
-.animation-delay-200 {
-  animation-delay: 0.2s;
-}
-
-.animation-delay-300 {
-  animation-delay: 0.3s;
-}
-
-.animation-delay-400 {
-  animation-delay: 0.4s;
-}
-
-.animation-delay-600 {
-  animation-delay: 0.6s;
-}
-
-.animation-delay-800 {
-  animation-delay: 0.8s;
-}
-
-/* Fade in animation */
-@keyframes fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-fade-in {
-  animation: fade-in 0.6s ease-out;
-}
-
-.animate-fade-in-up {
-  animation: fade-in 0.8s ease-out;
-}
-
-/* Scroll reveal */
 .scroll-reveal {
   opacity: 0;
-  transform: translateY(30px);
-  transition:
-    opacity 0.6s ease-out,
-    transform 0.6s ease-out;
+  transform: translateY(40px);
+  transition: all 1s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .scroll-reveal.is-visible {
@@ -408,46 +279,27 @@ onUnmounted(() => {
   transform: translateY(0);
 }
 
-/* Service Cards Transition - Enhanced */
-.service-cards-enter-active {
-  transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+@keyframes pulse-slow {
+  0%, 100% { transform: scale(1); opacity: 0.4; }
+  50% { transform: scale(1.1); opacity: 0.6; }
 }
 
-.service-cards-leave-active {
-  transition: all 0.4s cubic-bezier(0.55, 0.085, 0.68, 0.53);
-  position: absolute;
-  width: 100%;
+.animate-pulse-slow {
+  animation: pulse-slow 10s ease-in-out infinite;
 }
 
-.service-cards-enter-from {
+.service-row-enter-active,
+.service-row-leave-active {
+  transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.service-row-enter-from,
+.service-row-leave-to {
   opacity: 0;
-  transform: translateX(-30px) scale(0.9);
-  filter: blur(4px);
+  transform: translateX(30px);
 }
 
-.service-cards-leave-to {
-  opacity: 0;
-  transform: translateX(30px) scale(0.9);
-  filter: blur(4px);
-}
-
-.service-cards-move {
-  transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-/* Grid container for proper transition */
-.grid {
-  position: relative;
-}
-
-/* Force white text on hover for "Voir tous les professionnels" button */
-.view-all-professionals:hover span,
-.view-all-professionals:hover svg {
-  color: white !important;
-}
-
-.view-all-professionals:hover {
-  background-color: #1976d2 !important;
-  border-color: #1976d2 !important;
+section {
+  font-family: 'Inter', sans-serif;
 }
 </style>

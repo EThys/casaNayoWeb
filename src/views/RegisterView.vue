@@ -1,48 +1,128 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { countryCodes, getCountryNameByDialCode, type CountryCode } from '@/utils/countryCodes'
+import { registerUser } from '@/services/api'
+import { useAuthStore } from '@/stores/auth'
+import { useTypeAccountsStore } from '@/stores/typeAccounts'
 
 const router = useRouter()
+const authStore = useAuthStore()
+const typeAccountsStore = useTypeAccountsStore()
 const step = ref(1)
 const formData = ref({
-  fullName: '',
+  firstName: '',
+  lastName: '',
   email: '',
-  phone: '',
+  phoneNumber: '',
+  countryCode: '+243',
+  country: '',
+  city: '',
+  address: '',
   password: '',
   confirmPassword: '',
-  userType: 'client', // client, professional, owner
+  typeAccountId: 0,
+  username: '',
   acceptTerms: false,
 })
 const showPassword = ref(false)
 const showConfirmPassword = ref(false)
 const isLoading = ref(false)
 const errorMessage = ref('')
+const showCountryCodeDropdown = ref(false)
+const selectedCountry = ref<CountryCode>(countryCodes[0])
+
+// Computed properties for type accounts from store
+// Filter types from store
+const filteredTypeAccounts = computed(() =>
+  typeAccountsStore.typeAccounts.filter((acc) => acc.typeAccountId !== 1),
+)
+
+const loadingAccounts = computed(() => typeAccountsStore.isLoading)
+
+// Update country when country code changes
+const updateCountry = () => {
+  const country = countryCodes.find((c) => c.dialCode === formData.value.countryCode)
+  if (country) {
+    selectedCountry.value = country
+    formData.value.country = country.name
+  }
+}
+
+// Close dropdown when clicking outside
+const handleClickOutside = (event: MouseEvent) => {
+  const target = event.target as HTMLElement
+  if (!target.closest('.country-code-selector')) {
+    showCountryCodeDropdown.value = false
+  }
+}
+
+// Initialize country on mount
+onMounted(async () => {
+  updateCountry()
+  await loadTypeAccounts()
+  document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
+
+const loadTypeAccounts = async () => {
+  try {
+    // Use store to get type accounts (with caching)
+    await typeAccountsStore.getTypeAccountsExcludingAdmin()
+  } catch (error) {
+    errorMessage.value = 'Erreur lors du chargement des types de comptes'
+  }
+}
 
 const passwordStrength = computed(() => {
   const password = formData.value.password
   if (!password) return { level: 0, text: '', color: '' }
-  
+
   let strength = 0
+  // Minimum 6 caractères
+  if (password.length >= 6) strength++
+  // Plus de 8 caractères
   if (password.length >= 8) strength++
+  // Contient des lettres minuscules
   if (password.match(/[a-z]/)) strength++
+  // Contient des lettres majuscules
   if (password.match(/[A-Z]/)) strength++
+  // Contient des chiffres
   if (password.match(/[0-9]/)) strength++
+  // Contient des caractères spéciaux
   if (password.match(/[^a-zA-Z0-9]/)) strength++
-  
+
+  // Moins strict : juste informer, pas bloquer
   if (strength <= 2) return { level: strength, text: 'Faible', color: 'bg-red-500' }
-  if (strength <= 3) return { level: strength, text: 'Moyen', color: 'bg-yellow-500' }
+  if (strength <= 4) return { level: strength, text: 'Moyen', color: 'bg-yellow-500' }
   return { level: strength, text: 'Fort', color: 'bg-green-500' }
 })
 
 const canProceedStep1 = computed(() => {
-  return formData.value.fullName && formData.value.email && formData.value.phone
+  return (
+    formData.value.firstName &&
+    formData.value.lastName &&
+    formData.value.email &&
+    formData.value.phoneNumber &&
+    formData.value.city &&
+    formData.value.address
+  )
 })
 
 const canProceedStep2 = computed(() => {
-  return formData.value.password && 
-         formData.value.confirmPassword && 
-         formData.value.password === formData.value.confirmPassword &&
-         formData.value.password.length >= 8
+  return (
+    formData.value.password &&
+    formData.value.confirmPassword &&
+    formData.value.password === formData.value.confirmPassword &&
+    formData.value.password.length >= 6
+  )
+})
+
+const canProceedStep3 = computed(() => {
+  return formData.value.typeAccountId > 0 && formData.value.username
 })
 
 const nextStep = () => {
@@ -57,42 +137,103 @@ const prevStep = () => {
   if (step.value > 1) step.value--
 }
 
+const selectCountryCode = (country: CountryCode) => {
+  formData.value.countryCode = country.dialCode
+  selectedCountry.value = country
+  formData.value.country = country.name
+  showCountryCodeDropdown.value = false
+}
+
 const handleRegister = async () => {
   errorMessage.value = ''
-  
+
   if (!formData.value.acceptTerms) {
-    errorMessage.value = 'Veuillez accepter les conditions d\'utilisation'
+    errorMessage.value = "Veuillez accepter les conditions d'utilisation"
     return
   }
-  
+
+  if (!canProceedStep3.value) {
+    errorMessage.value = 'Veuillez sélectionner au moins un type de compte'
+    return
+  }
+
   isLoading.value = true
-  
-  // Simuler une requête API
-  setTimeout(() => {
+
+  try {
+    // Concatenate country code + phone number
+    const fullPhone = `${formData.value.countryCode}${formData.value.phoneNumber.replace(/\s/g, '')}`
+
+    const actorData = {
+      lastName: formData.value.lastName,
+      firstName: formData.value.firstName,
+      address: formData.value.address,
+      images: null,
+      cardFront: null,
+      cardBack: null,
+      typeCardId: 1, // Default or select in UI if needed
+      parrainId: 0,
+      numberCard: '',
+    }
+
+    const userData = {
+      phone: fullPhone,
+      password: formData.value.password,
+      email: formData.value.email,
+      username: formData.value.username,
+      city: formData.value.city,
+      country: formData.value.country,
+    }
+
+    const accountData = [
+      {
+        typeAccount: formData.value.typeAccountId,
+      },
+    ]
+
+    const response = await registerUser(userData, actorData, accountData)
+
+    // Save auth data to store and localStorage
+    if (response && response.token) {
+      authStore.setAuth(response)
+    }
+
+    // Success - redirect to home or dashboard
+    router.push('/')
+  } catch (error: any) {
+    errorMessage.value = error.message || "Erreur lors de l'inscription. Veuillez réessayer."
+  } finally {
     isLoading.value = false
-    router.push('/login')
-  }, 1500)
+  }
 }
 
 const handleGoogleSignup = () => {
-  console.log('Google signup')
+  // Google signup implementation
 }
 
 const handleFacebookSignup = () => {
-  console.log('Facebook signup')
+  // Facebook signup implementation
 }
 </script>
 
 <template>
-  <div class="min-h-screen flex relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-blue-50">
-    <!-- Decorative Background Elements -->
-    <div class="absolute inset-0 overflow-hidden pointer-events-none">
-      <div class="absolute top-20 left-10 w-72 h-72 bg-blue-400/10 rounded-full blur-3xl animate-float"></div>
-      <div class="absolute bottom-20 right-20 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-float" style="animation-delay: 1s"></div>
-      <div class="absolute top-1/2 left-1/3 w-64 h-64 bg-blue-300/5 rounded-full blur-2xl animate-pulse-slow"></div>
+  <div
+    class="min-h-screen flex relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-blue-50"
+  >
+    <!-- Decorative Background Digital Layers - Elite Aesthetic -->
+    <div class="absolute inset-0 overflow-hidden pointer-events-none z-0">
+      <!-- Fixed Grain Texture -->
+      <div class="absolute inset-0 opacity-[0.03] contrast-150 z-50 pointer-events-none" 
+           style="background-image: url('data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.65\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E');">
+      </div>
+
+      <!-- Kinetic Blobs -->
+      <div class="absolute top-20 left-10 w-96 h-96 bg-blue-600/10 rounded-full blur-[120px] animate-blob-drift"></div>
+      <div class="absolute bottom-20 right-20 w-[500px] h-[500px] bg-cyan-500/10 rounded-full blur-[150px] animate-blob-drift-reverse"></div>
       
-      <!-- Animated Grid -->
-      <div class="absolute inset-0 opacity-10" style="background-image: linear-gradient(rgba(37, 99, 235, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(37, 99, 235, 0.1) 1px, transparent 1px); background-size: 60px 60px;"></div>
+      <!-- Tech Grid Overlay -->
+      <div class="absolute inset-0 opacity-[0.03] animate-grid-slide"
+           style="background-image: linear-gradient(#2563eb 1px, transparent 1px), linear-gradient(90deg, #2563eb 1px, transparent 1px); background-size: 60px 60px;">
+      </div>
     </div>
 
     <!-- Main Content -->
@@ -100,15 +241,20 @@ const handleFacebookSignup = () => {
       <div class="w-full max-w-2xl space-y-8 animate-scale-in">
         <!-- Logo & Back to Home -->
         <div class="flex items-center justify-between">
-          <h2 class="text-3xl font-bold text-blue-600" style="font-family: 'Poppins', sans-serif">
-            CasaNayo
+          <h2 class="text-3xl font-black text-blue-600 tracking-tighter">
+            casaNayo
           </h2>
           <router-link
             to="/"
             class="flex items-center space-x-2 text-gray-600 hover:text-blue-600 transition-colors"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
             </svg>
             <span class="text-sm font-semibold">Retour à l'accueil</span>
           </router-link>
@@ -117,74 +263,156 @@ const handleFacebookSignup = () => {
         <!-- Registration Card -->
         <div class="bg-white rounded-3xl shadow-2xl p-8 sm:p-10 space-y-8 relative overflow-hidden">
           <!-- Decorative Corner -->
-          <div class="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-blue-100 to-transparent rounded-bl-full"></div>
-          
+          <div
+            class="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-blue-100 to-transparent rounded-bl-full"
+          ></div>
+
           <!-- Header -->
           <div class="relative">
-            <h2 class="text-3xl font-bold text-gray-900 mb-2" style="font-family: 'Poppins', sans-serif">
-              Créer un compte
+            <h2
+              class="text-3xl font-black text-slate-900 mb-2 tracking-tighter"
+            >
+              Nouveau Compte
             </h2>
-            <p class="text-gray-600">Rejoignez la communauté CasaNayo</p>
+            <p class="text-slate-500 font-medium text-sm">Rejoignez l'élite de l'immobilier en RDC.</p>
           </div>
 
           <!-- Progress Steps -->
           <div class="flex items-center justify-between relative">
             <div class="absolute top-5 left-0 right-0 h-1 bg-gray-200 -z-10"></div>
-            <div 
+            <div
               class="absolute top-5 left-0 h-1 bg-blue-600 -z-10 transition-all duration-500"
               :style="{ width: step === 1 ? '0%' : step === 2 ? '50%' : '100%' }"
             ></div>
-            
+
             <div v-for="s in 3" :key="s" class="flex flex-col items-center">
-              <div 
-                class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300"
-                :class="step >= s ? 'bg-blue-600 text-white shadow-lg' : 'bg-white border-2 border-gray-300 text-gray-400'"
+              <div
+                class="w-10 h-10 rounded-full flex items-center justify-center font-black text-xs transition-all duration-500"
+                :class="
+                  step >= s
+                    ? 'bg-blue-600 text-white shadow-[0_10px_20px_-5px_rgba(37,99,235,0.4)]'
+                    : 'bg-white border-2 border-slate-200 text-slate-400'
+                "
               >
                 <svg v-if="step > s" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                  <path
+                    fill-rule="evenodd"
+                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                    clip-rule="evenodd"
+                  />
                 </svg>
                 <span v-else>{{ s }}</span>
               </div>
-              <span class="text-xs mt-2 font-semibold" :class="step >= s ? 'text-blue-600' : 'text-gray-400'">
-                {{ s === 1 ? 'Infos' : s === 2 ? 'Sécurité' : 'Type' }}
+              <span
+                class="text-[10px] mt-3 font-black uppercase tracking-widest text-center"
+                :class="step >= s ? 'text-blue-600' : 'text-slate-400'"
+              >
+                {{ s === 1 ? 'Identité' : s === 2 ? 'Sécurité' : 'Profil' }}
               </span>
             </div>
           </div>
 
           <!-- Error Message -->
-          <div v-if="errorMessage" class="p-4 bg-red-50 border border-red-200 rounded-xl flex items-start space-x-3 animate-fade-in">
-            <svg class="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+          <div
+            v-if="errorMessage"
+            class="p-4 bg-red-50 border border-red-200 rounded-xl flex items-start space-x-3 animate-fade-in"
+          >
+            <svg
+              class="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                clip-rule="evenodd"
+              />
             </svg>
             <span class="text-red-800 text-sm">{{ errorMessage }}</span>
           </div>
 
           <!-- Step 1: Basic Info -->
           <form v-if="step === 1" class="space-y-6">
-            <div class="space-y-2">
-              <label class="block text-sm font-semibold text-gray-700">Nom complet</label>
-              <div class="relative group">
-                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <svg class="w-5 h-5 text-gray-400 group-focus-within:text-blue-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                  </svg>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="space-y-2">
+                <label class="block text-sm font-semibold text-gray-700"
+                  >Prénom <span class="text-red-500">*</span></label
+                >
+                <div class="relative group">
+                  <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <svg
+                      class="w-5 h-5 text-gray-400 group-focus-within:text-blue-600 transition-colors"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                      />
+                    </svg>
+                  </div>
+                  <input
+                    v-model="formData.firstName"
+                    type="text"
+                    required
+                    placeholder="John"
+                    class="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all hover:border-blue-300"
+                  />
                 </div>
-                <input
-                  v-model="formData.fullName"
-                  type="text"
-                  required
-                  placeholder="John Doe"
-                  class="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all hover:border-blue-300"
-                />
+              </div>
+
+              <div class="space-y-2">
+                <label class="block text-sm font-semibold text-gray-700"
+                  >Nom <span class="text-red-500">*</span></label
+                >
+                <div class="relative group">
+                  <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <svg
+                      class="w-5 h-5 text-gray-400 group-focus-within:text-blue-600 transition-colors"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                      />
+                    </svg>
+                  </div>
+                  <input
+                    v-model="formData.lastName"
+                    type="text"
+                    required
+                    placeholder="Doe"
+                    class="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all hover:border-blue-300"
+                  />
+                </div>
               </div>
             </div>
 
             <div class="space-y-2">
-              <label class="block text-sm font-semibold text-gray-700">Email</label>
+              <label class="block text-sm font-semibold text-gray-700"
+                >Email <span class="text-red-500">*</span></label
+              >
               <div class="relative group">
                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <svg class="w-5 h-5 text-gray-400 group-focus-within:text-blue-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"/>
+                  <svg
+                    class="w-5 h-5 text-gray-400 group-focus-within:text-blue-600 transition-colors"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
+                    />
                   </svg>
                 </div>
                 <input
@@ -198,20 +426,167 @@ const handleFacebookSignup = () => {
             </div>
 
             <div class="space-y-2">
-              <label class="block text-sm font-semibold text-gray-700">Téléphone</label>
-              <div class="relative group">
-                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <svg class="w-5 h-5 text-gray-400 group-focus-within:text-blue-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
-                  </svg>
+              <label class="block text-sm font-semibold text-gray-700"
+                >Téléphone <span class="text-red-500">*</span></label
+              >
+              <div class="flex gap-2">
+                <!-- Country Code Selector -->
+                <div class="relative country-code-selector">
+                  <button
+                    type="button"
+                    @click.stop="showCountryCodeDropdown = !showCountryCodeDropdown"
+                    class="flex items-center space-x-2 px-4 py-3.5 border-2 border-gray-200 rounded-xl hover:border-blue-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
+                  >
+                    <span class="text-xl">{{ selectedCountry.flag }}</span>
+                    <span class="text-sm font-medium text-gray-700">{{
+                      selectedCountry.dialCode
+                    }}</span>
+                    <svg
+                      class="w-4 h-4 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </button>
+
+                  <!-- Dropdown -->
+                  <div
+                    v-if="showCountryCodeDropdown"
+                    class="absolute z-50 mt-2 w-80 max-h-64 overflow-y-auto bg-white border-2 border-gray-200 rounded-xl shadow-lg"
+                    @click.stop
+                  >
+                    <div class="p-2">
+                      <input
+                        type="text"
+                        placeholder="Rechercher un pays..."
+                        class="w-full px-3 py-2 border border-gray-200 rounded-lg mb-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        @input="
+                          (e) => {
+                            const search = (e.target as HTMLInputElement).value.toLowerCase()
+                            // Filter countries based on search
+                          }
+                        "
+                      />
+                      <div class="space-y-1">
+                        <button
+                          v-for="country in countryCodes"
+                          :key="country.code"
+                          type="button"
+                          @click="selectCountryCode(country)"
+                          class="w-full flex items-center space-x-3 px-3 py-2 hover:bg-blue-50 rounded-lg transition-colors text-left"
+                          :class="formData.countryCode === country.dialCode ? 'bg-blue-100' : ''"
+                        >
+                          <span class="text-xl">{{ country.flag }}</span>
+                          <span class="flex-1 text-sm font-medium text-gray-700">{{
+                            country.name
+                          }}</span>
+                          <span class="text-sm text-gray-500">{{ country.dialCode }}</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <input
-                  v-model="formData.phone"
-                  type="tel"
-                  required
-                  placeholder="+243 XXX XXX XXX"
-                  class="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all hover:border-blue-300"
-                />
+
+                <!-- Phone Number Input -->
+                <div class="flex-1 relative group">
+                  <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <svg
+                      class="w-5 h-5 text-gray-400 group-focus-within:text-blue-600 transition-colors"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                      />
+                    </svg>
+                  </div>
+                  <input
+                    v-model="formData.phoneNumber"
+                    type="tel"
+                    required
+                    placeholder="XXX XXX XXX"
+                    class="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all hover:border-blue-300"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="space-y-2">
+                <label class="block text-sm font-semibold text-gray-700"
+                  >Ville <span class="text-red-500">*</span></label
+                >
+                <div class="relative group">
+                  <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <svg
+                      class="w-5 h-5 text-gray-400 group-focus-within:text-blue-600 transition-colors"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                      />
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                    </svg>
+                  </div>
+                  <input
+                    v-model="formData.city"
+                    type="text"
+                    required
+                    placeholder="Kinshasa"
+                    class="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all hover:border-blue-300"
+                  />
+                </div>
+              </div>
+
+              <div class="space-y-2">
+                <label class="block text-sm font-semibold text-gray-700"
+                  >Adresse <span class="text-red-500">*</span></label
+                >
+                <div class="relative group">
+                  <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <svg
+                      class="w-5 h-5 text-gray-400 group-focus-within:text-blue-600 transition-colors"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                      />
+                    </svg>
+                  </div>
+                  <input
+                    v-model="formData.address"
+                    type="text"
+                    required
+                    placeholder="123 Rue Example"
+                    class="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all hover:border-blue-300"
+                  />
+                </div>
               </div>
             </div>
 
@@ -219,21 +594,32 @@ const handleFacebookSignup = () => {
               @click="nextStep"
               type="button"
               :disabled="!canProceedStep1"
-              class="w-full py-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold rounded-xl transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-blue-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
-              style="font-family: 'Poppins', sans-serif"
+              class="w-full py-4.5 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-black uppercase tracking-[0.2em] text-xs rounded-2xl transition-all duration-500 shadow-[0_20px_40px_-10px_rgba(37,99,235,0.4)] hover:shadow-[0_25px_50px_-10px_rgba(37,99,235,0.6)] disabled:opacity-30 disabled:cursor-not-allowed group active:scale-[0.98]"
             >
-              Continuer
+              Étape Suivante
             </button>
           </form>
 
           <!-- Step 2: Security -->
           <form v-if="step === 2" class="space-y-6">
             <div class="space-y-2">
-              <label class="block text-sm font-semibold text-gray-700">Mot de passe</label>
+              <label class="block text-sm font-semibold text-gray-700"
+                >Mot de passe <span class="text-red-500">*</span></label
+              >
               <div class="relative group">
                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <svg class="w-5 h-5 text-gray-400 group-focus-within:text-blue-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                  <svg
+                    class="w-5 h-5 text-gray-400 group-focus-within:text-blue-600 transition-colors"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                    />
                   </svg>
                 </div>
                 <input
@@ -241,49 +627,83 @@ const handleFacebookSignup = () => {
                   :type="showPassword ? 'text' : 'password'"
                   required
                   placeholder="••••••••"
-                  class="w-full pl-12 pr-12 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all hover:border-blue-300"
+                  class="w-full pl-12 pr-12 py-3.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all hover:border-blue-400 text-sm"
                 />
                 <button
                   type="button"
                   @click="showPassword = !showPassword"
                   class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-blue-600 transition-colors"
                 >
-                  <svg v-if="!showPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  <svg
+                    v-if="!showPassword"
+                    class="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                    />
                   </svg>
                   <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                    />
                   </svg>
                 </button>
               </div>
-              
+
               <!-- Password Strength -->
               <div v-if="formData.password" class="space-y-2">
                 <div class="flex items-center space-x-2">
                   <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div 
+                    <div
                       class="h-full transition-all duration-300"
                       :class="passwordStrength.color"
                       :style="{ width: `${(passwordStrength.level / 5) * 100}%` }"
                     ></div>
                   </div>
-                  <span class="text-xs font-semibold" :class="passwordStrength.color.replace('bg-', 'text-')">
+                  <span
+                    class="text-xs font-semibold"
+                    :class="passwordStrength.color.replace('bg-', 'text-')"
+                  >
                     {{ passwordStrength.text }}
                   </span>
                 </div>
-                <p class="text-xs text-gray-500">
-                  Utilisez 8 caractères minimum avec majuscules, chiffres et symboles
-                </p>
+                <p class="text-xs text-gray-500">Minimum 6 caractères recommandés</p>
               </div>
             </div>
 
             <div class="space-y-2">
-              <label class="block text-sm font-semibold text-gray-700">Confirmer le mot de passe</label>
+              <label class="block text-sm font-semibold text-gray-700"
+                >Confirmer le mot de passe <span class="text-red-500">*</span></label
+              >
               <div class="relative group">
                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <svg class="w-5 h-5 text-gray-400 group-focus-within:text-blue-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  <svg
+                    class="w-5 h-5 text-gray-400 group-focus-within:text-blue-600 transition-colors"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
                   </svg>
                 </div>
                 <input
@@ -291,24 +711,52 @@ const handleFacebookSignup = () => {
                   :type="showConfirmPassword ? 'text' : 'password'"
                   required
                   placeholder="••••••••"
-                  class="w-full pl-12 pr-12 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all hover:border-blue-300"
-                  :class="formData.confirmPassword && formData.password !== formData.confirmPassword ? 'border-red-300' : ''"
+                  class="w-full pl-12 pr-12 py-3.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all hover:border-blue-400 text-sm"
+                  :class="
+                    formData.confirmPassword && formData.password !== formData.confirmPassword
+                      ? 'border-red-500'
+                      : ''
+                  "
                 />
                 <button
                   type="button"
                   @click="showConfirmPassword = !showConfirmPassword"
                   class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-blue-600 transition-colors"
                 >
-                  <svg v-if="!showConfirmPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  <svg
+                    v-if="!showConfirmPassword"
+                    class="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                    />
                   </svg>
                   <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                    />
                   </svg>
                 </button>
               </div>
-              <p v-if="formData.confirmPassword && formData.password !== formData.confirmPassword" class="text-xs text-red-600">
+              <p
+                v-if="formData.confirmPassword && formData.password !== formData.confirmPassword"
+                class="text-xs text-red-600"
+              >
                 Les mots de passe ne correspondent pas
               </p>
             </div>
@@ -317,7 +765,7 @@ const handleFacebookSignup = () => {
               <button
                 @click="prevStep"
                 type="button"
-                class="flex-1 py-4 border-2 border-gray-300 hover:border-blue-500 text-gray-700 hover:text-blue-600 font-bold rounded-xl transition-all"
+                class="flex-1 py-4.5 border border-slate-200 hover:border-blue-500 text-slate-600 hover:text-blue-600 font-bold rounded-2xl transition-all uppercase tracking-widest text-[10px]"
               >
                 Retour
               </button>
@@ -325,8 +773,7 @@ const handleFacebookSignup = () => {
                 @click="nextStep"
                 type="button"
                 :disabled="!canProceedStep2"
-                class="flex-1 py-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold rounded-xl transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-blue-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
-                style="font-family: 'Poppins', sans-serif"
+                class="flex-1 py-4.5 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-black uppercase tracking-[0.2em] text-xs rounded-2xl transition-all duration-500 shadow-[0_20px_40px_-10px_rgba(37,99,235,0.4)] hover:shadow-[0_25px_50px_-10px_rgba(37,99,235,0.6)] disabled:opacity-30 disabled:cursor-not-allowed group active:scale-[0.98]"
               >
                 Continuer
               </button>
@@ -335,76 +782,119 @@ const handleFacebookSignup = () => {
 
           <!-- Step 3: User Type -->
           <form v-if="step === 3" @submit.prevent="handleRegister" class="space-y-6">
-            <div class="space-y-4">
-              <label class="block text-sm font-semibold text-gray-700 mb-4">
-                Je souhaite utiliser CasaNayo en tant que :
-              </label>
-              
-              <!-- Client -->
-              <label class="relative flex items-start p-5 border-2 rounded-xl cursor-pointer transition-all hover:border-blue-300 hover:bg-blue-50"
-                :class="formData.userType === 'client' ? 'border-blue-600 bg-blue-50' : 'border-gray-200'">
-                <input
-                  v-model="formData.userType"
-                  type="radio"
-                  value="client"
-                  class="mt-1 w-5 h-5 text-blue-600 cursor-pointer"
-                />
-                <div class="ml-4 flex-1">
-                  <div class="flex items-center space-x-2">
-                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                    </svg>
-                    <span class="font-bold text-gray-900">Client</span>
-                  </div>
-                  <p class="text-sm text-gray-600 mt-1">
-                    Je cherche une propriété ou un service professionnel
-                  </p>
+            <div class="space-y-2">
+              <label class="block text-sm font-semibold text-gray-700"
+                >Nom d'utilisateur <span class="text-red-500">*</span></label
+              >
+              <div class="relative group">
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <svg
+                    class="w-5 h-5 text-gray-400 group-focus-within:text-blue-600 transition-colors"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    />
+                  </svg>
                 </div>
-              </label>
+                <input
+                  v-model="formData.username"
+                  type="text"
+                  required
+                  placeholder="johndoe"
+                  class="w-full pl-12 pr-4 py-3.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all hover:border-blue-400 text-sm"
+                />
+              </div>
+            </div>
 
-              <!-- Professional -->
-              <label class="relative flex items-start p-5 border-2 rounded-xl cursor-pointer transition-all hover:border-blue-300 hover:bg-blue-50"
-                :class="formData.userType === 'professional' ? 'border-blue-600 bg-blue-50' : 'border-gray-200'">
-                <input
-                  v-model="formData.userType"
-                  type="radio"
-                  value="professional"
-                  class="mt-1 w-5 h-5 text-blue-600 cursor-pointer"
-                />
-                <div class="ml-4 flex-1">
-                  <div class="flex items-center space-x-2">
-                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                    </svg>
-                    <span class="font-bold text-gray-900">Professionnel</span>
-                  </div>
-                  <p class="text-sm text-gray-600 mt-1">
-                    Je propose mes services (plombier, électricien, architecte, etc.)
-                  </p>
-                </div>
-              </label>
+            <div class="space-y-6">
+              <p class="text-sm text-gray-600 mb-4">
+                Sélectionnez au moins un type de compte. Vous pouvez choisir un type dans
+                l'immobilier et/ou un type dans les services.
+              </p>
 
-              <!-- Owner -->
-              <label class="relative flex items-start p-5 border-2 rounded-xl cursor-pointer transition-all hover:border-blue-300 hover:bg-blue-50"
-                :class="formData.userType === 'owner' ? 'border-blue-600 bg-blue-50' : 'border-gray-200'">
-                <input
-                  v-model="formData.userType"
-                  type="radio"
-                  value="owner"
-                  class="mt-1 w-5 h-5 text-blue-600 cursor-pointer"
-                />
-                <div class="ml-4 flex-1">
-                  <div class="flex items-center space-x-2">
-                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-                    </svg>
-                    <span class="font-bold text-gray-900">Propriétaire</span>
+              <div v-if="loadingAccounts" class="text-center py-8">
+                <svg
+                  class="animate-spin h-8 w-8 text-blue-600 mx-auto"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    class="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    stroke-width="4"
+                  ></circle>
+                  <path
+                    class="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                <p class="text-gray-600 mt-2">Chargement des types de comptes...</p>
+              </div>
+
+              <div v-else class="space-y-6">
+                <!-- Account Type selection -->
+                <div class="space-y-2">
+                  <label class="block text-sm font-semibold text-gray-700">
+                    Type de compte <span class="text-red-500">*</span>
+                  </label>
+                  <div class="grid grid-cols-1 gap-3">
+                    <button
+                      v-for="account in filteredTypeAccounts"
+                      :key="account.typeAccountId"
+                      type="button"
+                      @click="formData.typeAccountId = account.typeAccountId"
+                      :class="
+                        formData.typeAccountId === account.typeAccountId
+                          ? 'border-blue-600 bg-blue-50/50 text-blue-700'
+                          : 'border-slate-100 bg-slate-50/50 hover:border-blue-300'
+                      "
+                      class="flex items-center justify-between p-5 border rounded-2xl transition-all text-left group"
+                    >
+                      <div class="flex items-center space-x-4">
+                        <div
+                          :class="
+                            formData.typeAccountId === account.typeAccountId
+                              ? 'bg-blue-600 border-blue-600'
+                              : 'bg-white border-slate-200'
+                          "
+                          class="w-6 h-6 rounded-full border-2 shadow-sm flex-shrink-0 flex items-center justify-center transition-all"
+                        >
+                          <div v-if="formData.typeAccountId === account.typeAccountId" class="w-1.5 h-1.5 bg-white rounded-full"></div>
+                        </div>
+                        <span class="font-bold text-sm tracking-tight">{{ account.name }}</span>
+                      </div>
+                      <svg
+                        v-if="formData.typeAccountId === account.typeAccountId"
+                        class="w-5 h-5 text-blue-600 animate-scale-in"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fill-rule="evenodd"
+                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                          clip-rule="evenodd"
+                        />
+                      </svg>
+                    </button>
                   </div>
-                  <p class="text-sm text-gray-600 mt-1">
-                    Je souhaite publier mes biens immobiliers
-                  </p>
                 </div>
-              </label>
+
+                <!-- Info message -->
+                <div v-if="formData.typeAccountId === 0" class="p-3 bg-yellow-50 border border-yellow-200 rounded-xl">
+                  <p class="text-xs text-yellow-800">⚠️ Veuillez sélectionner un type de compte</p>
+                </div>
+              </div>
             </div>
 
             <!-- Terms & Conditions -->
@@ -417,73 +907,54 @@ const handleFacebookSignup = () => {
               />
               <span class="ml-3 text-sm text-gray-700 group-hover:text-gray-900">
                 J'accepte les
-                <a href="#" class="text-blue-600 hover:underline font-semibold">conditions d'utilisation</a>
+                <a href="#" class="text-blue-600 hover:underline font-semibold"
+                  >conditions d'utilisation</a
+                >
                 et la
-                <a href="#" class="text-blue-600 hover:underline font-semibold">politique de confidentialité</a>
+                <a href="#" class="text-blue-600 hover:underline font-semibold"
+                  >politique de confidentialité</a
+                >
               </span>
             </label>
 
-            <!-- Buttons -->
             <div class="flex space-x-4">
               <button
                 @click="prevStep"
                 type="button"
-                class="flex-1 py-4 border-2 border-gray-300 hover:border-blue-500 text-gray-700 hover:text-blue-600 font-bold rounded-xl transition-all"
+                class="flex-1 py-4.5 border border-slate-200 hover:border-blue-500 text-slate-600 hover:text-blue-600 font-bold rounded-2xl transition-all uppercase tracking-widest text-[10px]"
               >
                 Retour
               </button>
               <button
                 type="submit"
-                :disabled="isLoading || !formData.acceptTerms"
-                class="flex-1 py-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold rounded-xl transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-blue-500/50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-                style="font-family: 'Poppins', sans-serif"
+                :disabled="isLoading || !formData.acceptTerms || !canProceedStep3"
+                class="flex-1 py-4.5 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-black uppercase tracking-[0.2em] text-xs rounded-2xl transition-all duration-500 shadow-[0_20px_40px_-10px_rgba(37,99,235,0.4)] hover:shadow-[0_25px_50px_-10px_rgba(37,99,235,0.6)] disabled:opacity-30 disabled:cursor-not-allowed group active:scale-[0.98] flex items-center justify-center space-x-2"
               >
-                <svg v-if="isLoading" class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <svg
+                  v-if="isLoading"
+                  class="animate-spin h-5 w-5"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    class="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    stroke-width="4"
+                  ></circle>
+                  <path
+                    class="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
                 </svg>
-                <span>{{ isLoading ? 'Création...' : 'Créer mon compte' }}</span>
+                <span>{{ isLoading ? 'Progression...' : 'Créer mon compte' }}</span>
               </button>
             </div>
           </form>
-
-          <!-- Divider -->
-          <div v-if="step === 1" class="relative">
-            <div class="absolute inset-0 flex items-center">
-              <div class="w-full border-t border-gray-200"></div>
-            </div>
-            <div class="relative flex justify-center text-sm">
-              <span class="px-4 bg-white text-gray-500 font-medium">Ou s'inscrire avec</span>
-            </div>
-          </div>
-
-          <!-- Social Signup -->
-          <div v-if="step === 1" class="grid grid-cols-2 gap-4">
-            <button
-              @click="handleGoogleSignup"
-              type="button"
-              class="flex items-center justify-center px-4 py-3 border-2 border-gray-200 rounded-xl hover:border-blue-300 hover:bg-blue-50 transition-all space-x-2 group"
-            >
-              <svg class="w-5 h-5" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-              </svg>
-              <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-600 transition-colors">Google</span>
-            </button>
-
-            <button
-              @click="handleFacebookSignup"
-              type="button"
-              class="flex items-center justify-center px-4 py-3 border-2 border-gray-200 rounded-xl hover:border-blue-300 hover:bg-blue-50 transition-all space-x-2 group"
-            >
-              <svg class="w-5 h-5" fill="#1877F2" viewBox="0 0 24 24">
-                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-              </svg>
-              <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-600 transition-colors">Facebook</span>
-            </button>
-          </div>
 
           <!-- Login Link -->
           <div class="text-center">
@@ -504,33 +975,35 @@ const handleFacebookSignup = () => {
 </template>
 
 <style scoped>
-@keyframes float {
-  0%, 100% {
-    transform: translate(0, 0) scale(1);
-  }
-  33% {
-    transform: translate(30px, -30px) scale(1.05);
-  }
-  66% {
-    transform: translate(-20px, 20px) scale(0.95);
-  }
+@keyframes blob-drift {
+  0% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -50px) scale(1.1); }
+  66% { transform: translate(-20px, 20px) scale(0.9); }
+  100% { transform: translate(0, 0) scale(1); }
 }
 
-.animate-float {
-  animation: float 20s ease-in-out infinite;
+@keyframes blob-drift-reverse {
+  0% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(-30px, 50px) scale(0.9); }
+  66% { transform: translate(20px, -20px) scale(1.1); }
+  100% { transform: translate(0, 0) scale(1); }
 }
 
-@keyframes pulse-slow {
-  0%, 100% {
-    opacity: 0.3;
-  }
-  50% {
-    opacity: 0.6;
-  }
+.animate-blob-drift {
+  animation: blob-drift 20s ease-in-out infinite;
 }
 
-.animate-pulse-slow {
-  animation: pulse-slow 4s ease-in-out infinite;
+.animate-blob-drift-reverse {
+  animation: blob-drift-reverse 25s ease-in-out infinite;
+}
+
+@keyframes grid-slide {
+  from { background-position: 0 0; }
+  to { background-position: 60px 60px; }
+}
+
+.animate-grid-slide {
+  animation: grid-slide 20s linear infinite;
 }
 
 @keyframes scale-in {
@@ -545,7 +1018,7 @@ const handleFacebookSignup = () => {
 }
 
 .animate-scale-in {
-  animation: scale-in 0.6s ease-out;
+  animation: scale-in 0.6s cubic-bezier(0.23, 1, 0.32, 1) both;
 }
 
 @keyframes fade-in {
@@ -561,4 +1034,3 @@ const handleFacebookSignup = () => {
   animation: fade-in 0.4s ease-out;
 }
 </style>
-

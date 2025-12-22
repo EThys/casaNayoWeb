@@ -9,6 +9,7 @@ const router = useRouter()
 const service = ref(findServiceById(route.params.id as string) || null)
 const currentImageIndex = ref(0)
 const isFavorite = ref(false)
+const isSharing = ref(false)
 const isLoading = ref(true)
 const showInterventionModal = ref(false)
 const interventionForm = ref({
@@ -19,6 +20,35 @@ const interventionForm = ref({
   address: '',
   description: '',
 })
+
+const showAllReviewsModal = ref(false)
+
+const mockReviews = [
+  {
+    id: 'r1',
+    userName: 'Sarah M.',
+    userImage: 'https://i.pravatar.cc/150?u=sarah',
+    rating: 5,
+    comment: 'Service impeccable ! Ponctuel et très professionnel. Je recommande vivement pour tout dépannage électrique.',
+    date: '12 Déc 2023',
+  },
+  {
+    id: 'r2',
+    userName: 'Marc L.',
+    userImage: 'https://i.pravatar.cc/150?u=marc',
+    rating: 4,
+    comment: 'Très satisfait de l\'intervention. Travail propre et soigné. Un petit retard compensé par la qualité du service.',
+    date: '05 Déc 2023',
+  },
+  {
+    id: 'r3',
+    userName: 'Arnaud K.',
+    userImage: 'https://i.pravatar.cc/150?u=arnaud',
+    rating: 5,
+    comment: 'Installation parfaite. De bons conseils pour l\'optimisation de la consommation électrique. Merci encore !',
+    date: '28 Nov 2023',
+  }
+]
 
 const openInterventionModal = () => {
   showInterventionModal.value = true
@@ -88,6 +118,23 @@ const goToImage = (index: number) => {
   currentImageIndex.value = index
 }
 
+const handleShare = async () => {
+  try {
+    if (navigator.share) {
+      await navigator.share({
+        title: service.value?.title,
+        text: service.value?.description,
+        url: window.location.href,
+      })
+    } else {
+      await navigator.clipboard.writeText(window.location.href)
+      alert('Lien copié dans le presse-papier !')
+    }
+  } catch (err) {
+    console.error('Erreur lors du partage:', err)
+  }
+}
+
 onMounted(() => {
   if (!service.value) {
     // Rediriger vers la page d'accueil si le service n'existe pas
@@ -108,105 +155,116 @@ onMounted(() => {
     </div>
 
     <div v-else-if="service">
-      <!-- Image Gallery -->
-      <div class="relative h-[500px] lg:h-[600px] overflow-hidden bg-gray-900">
+      <!-- Image Gallery Section -->
+      <div class="relative h-[550px] lg:h-[650px] overflow-hidden bg-gray-950">
+        <!-- Main Images -->
         <div class="relative w-full h-full">
           <img
             v-for="(image, index) in service.images"
             :key="`img-${index}`"
             :src="image"
             :alt="`${service.title} - Image ${index + 1}`"
-            class="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
+            class="absolute inset-0 w-full h-full object-cover transition-all duration-1000 ease-in-out"
             :class="{
-              'opacity-100 z-10': currentImageIndex === index,
-              'opacity-0 z-0': currentImageIndex !== index,
+              'opacity-100 z-10 scale-100': currentImageIndex === index,
+              'opacity-0 z-0 scale-110 blur-sm': currentImageIndex !== index,
             }"
           />
+          <!-- Dark overlay for better text contrast at top -->
+          <div class="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-black/60 to-transparent z-20 pointer-events-none"></div>
         </div>
 
-        <!-- Navigation Buttons -->
-        <button
-          v-if="service.images.length > 1"
-          @click="prevImage"
-          class="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-all z-20"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="w-6 h-6 text-gray-700"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
-        <button
-          v-if="service.images.length > 1"
-          @click="nextImage"
-          class="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-all z-20"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="w-6 h-6 text-gray-700"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
+        <!-- Top Overlay: Category only -->
+        <div class="absolute top-8 left-0 right-0 px-6 sm:px-10 flex justify-between items-start z-40 pointer-events-none">
+          <div class="flex items-center gap-4 pointer-events-auto">
+            <div 
+              v-if="service"
+              class="px-5 py-2.5 bg-blue-600/90 backdrop-blur-lg rounded-full text-[10px] font-black uppercase tracking-[0.2em] text-white shadow-2xl shadow-blue-500/40 border border-white/20 flex items-center gap-2"
+            >
+              <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+              {{ getCategoryLabel(service.category) }}
+            </div>
+          </div>
+        </div>
 
-        <!-- Image Indicators -->
-        <div
-          v-if="service.images.length > 1"
-          class="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2 z-20"
-        >
+        <!-- Bottom Left: Navigation Buttons -->
+        <div class="absolute bottom-8 left-6 sm:left-10 flex items-center gap-3 z-40">
           <button
-            v-for="(img, index) in service.images"
-            :key="index"
-            @click="goToImage(index)"
-            class="transition-all duration-300 rounded-full"
-            :class="
-              currentImageIndex === index
-                ? 'w-8 h-2 bg-white shadow-lg'
-                : 'w-2 h-2 bg-white/60 hover:bg-white/80'
-            "
-          ></button>
+            @click="router.back()"
+            class="w-12 h-12 bg-black/40 backdrop-blur-xl border border-white/20 rounded-full flex items-center justify-center text-white shadow-2xl hover:bg-white/20 active:scale-95 transition-all group"
+            title="Retour"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 transform group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          
+          <div class="h-8 w-[1px] bg-white/20 mx-1"></div>
+
+          <button
+            @click="handleShare"
+            class="w-12 h-12 bg-black/40 backdrop-blur-xl border border-white/20 rounded-full flex items-center justify-center text-white shadow-2xl hover:bg-white/20 active:scale-95 transition-all"
+            title="Partager"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+            </svg>
+          </button>
+
+          <button
+            @click="isFavorite = !isFavorite"
+            class="w-12 h-12 backdrop-blur-xl border rounded-full flex items-center justify-center shadow-2xl transition-all active:scale-90 overflow-hidden relative group/fav"
+            :class="isFavorite ? 'bg-red-500 border-red-400 text-white' : 'bg-black/40 border-white/20 text-white hover:bg-white/20'"
+            title="Favoris"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="w-6 h-6 transition-all duration-300 transform group-hover/fav:scale-110"
+              :fill="isFavorite ? 'currentColor' : 'none'"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2.3"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+            </svg>
+          </button>
         </div>
 
-        <!-- Category Badge -->
-        <div class="absolute top-4 left-4 z-20">
-          <span
-            class="px-4 py-2 rounded-full text-sm font-semibold backdrop-blur-md shadow-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white"
+        <!-- Image Gallery Controls -->
+        <div v-if="service.images.length > 1">
+          <!-- Navigation Arrows -->
+          <button
+            @click="prevImage"
+            class="absolute left-6 top-1/2 -translate-y-1/2 w-14 h-14 bg-white/10 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white shadow-2xl hover:bg-white/20 transition-all z-30 active:scale-95 group"
           >
-            {{ getCategoryLabel(service.category) }}
-          </span>
-        </div>
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 transform group-hover:-translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <button
+            @click="nextImage"
+            class="absolute right-6 top-1/2 -translate-y-1/2 w-14 h-14 bg-white/10 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white shadow-2xl hover:bg-white/20 transition-all z-30 active:scale-95 group"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 transform group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
 
-        <!-- Favorite Button -->
-        <button
-          @click="isFavorite = !isFavorite"
-          class="absolute top-4 right-4 w-12 h-12 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-all z-20"
-          :class="{ 'bg-blue-600': isFavorite }"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="w-6 h-6 transition-colors"
-            :class="isFavorite ? 'text-white' : 'text-gray-700'"
-            :fill="isFavorite ? 'currentColor' : 'none'"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-            />
-          </svg>
-        </button>
+          <!-- Indicators -->
+          <div class="absolute bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-3 z-30 px-5 py-3 bg-black/30 backdrop-blur-xl rounded-full border border-white/10 shadow-2xl">
+            <button
+              v-for="(img, index) in service.images"
+              :key="index"
+              @click="goToImage(index)"
+              class="transition-all duration-500 rounded-full"
+              :class="
+                currentImageIndex === index
+                  ? 'w-10 h-1.5 bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.6)]'
+                  : 'w-1.5 h-1.5 bg-white/30 hover:bg-white/60'
+              "
+            ></button>
+          </div>
+        </div>
       </div>
 
       <!-- Content -->
@@ -280,6 +338,50 @@ onMounted(() => {
                 </span>
               </div>
             </div>
+
+            <!-- Reviews Section -->
+            <div v-if="service" class="border-t border-gray-200 pt-8 mt-4">
+              <div class="flex items-center justify-between mb-8">
+                <div>
+                  <h2 class="text-2xl font-bold text-gray-900">Avis clients</h2>
+                  <div class="flex items-center gap-2 mt-1">
+                    <div class="flex text-yellow-400">
+                      <svg v-for="i in 5" :key="i" class="w-5 h-5" :fill="i <= Math.round(service.rating || 0) ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    </div>
+                    <span class="font-bold text-gray-900">{{ service.rating }}</span>
+                    <span class="text-gray-500">· {{ service.reviews }} avis</span>
+                  </div>
+                </div>
+                <button 
+                  @click="showAllReviewsModal = true"
+                  class="px-4 py-2 text-blue-600 font-semibold hover:bg-blue-50 rounded-lg transition-colors"
+                >
+                  Voir tous les avis
+                </button>
+              </div>
+
+              <div class="space-y-6">
+                <div v-for="review in mockReviews.slice(0, 2)" :key="review.id" class="p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                  <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-3">
+                      <img :src="review.userImage" :alt="review.userName" class="w-10 h-10 rounded-full object-cover">
+                      <div>
+                        <div class="font-bold text-gray-900">{{ review.userName }}</div>
+                        <div class="text-[10px] text-gray-500">{{ review.date }}</div>
+                      </div>
+                    </div>
+                    <div class="flex text-yellow-400">
+                      <svg v-for="i in 5" :key="i" class="w-4 h-4" :fill="i <= review.rating ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    </div>
+                  </div>
+                  <p class="text-gray-700 leading-relaxed text-sm italic">"{{ review.comment }}"</p>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Sidebar -->
@@ -297,7 +399,7 @@ onMounted(() => {
               <!-- Bouton Principal -->
               <button
                 @click="openInterventionModal"
-                class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-blue-500/50 transform hover:scale-105 flex items-center justify-center space-x-2 group"
+                class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-blue-500/50 transform hover:scale-[1.02] flex items-center justify-center space-x-2 group"
               >
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
@@ -306,16 +408,6 @@ onMounted(() => {
                 <svg class="w-5 h-5 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                 </svg>
-              </button>
-
-              <!-- Bouton Secondaire -->
-              <button
-                class="w-full border-2 border-blue-600 hover:bg-blue-600 text-blue-600 hover:text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/30 flex items-center justify-center space-x-2"
-              >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
-                </svg>
-                <span>Poser une question</span>
               </button>
 
               <div class="border-t border-gray-200 pt-4 space-y-3">
@@ -359,21 +451,23 @@ onMounted(() => {
         </div>
       </div>
     </div>
+  </div>
 
     <!-- Modal Demande d'Intervention -->
-    <Transition
-      enter-active-class="transition duration-300 ease-out"
-      enter-from-class="opacity-0"
-      enter-to-class="opacity-100"
-      leave-active-class="transition duration-200 ease-in"
-      leave-from-class="opacity-100"
-      leave-to-class="opacity-0"
-    >
-      <div
-        v-if="showInterventionModal"
-        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-        @click.self="closeInterventionModal"
+    <Teleport to="body">
+      <Transition
+        enter-active-class="transition duration-300 ease-out"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition duration-200 ease-in"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
       >
+        <div
+          v-if="showInterventionModal"
+          class="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md"
+          @click.self="closeInterventionModal"
+        >
         <Transition
           enter-active-class="transition duration-300 ease-out"
           enter-from-class="opacity-0 scale-95"
@@ -403,7 +497,7 @@ onMounted(() => {
                   </svg>
                 </div>
                 <div>
-                  <h2 class="text-2xl font-bold text-white" style="font-family: 'Poppins', sans-serif">
+                  <h2 class="text-2xl font-bold text-white">
                     Demande d'Intervention
                   </h2>
                   <p class="text-blue-100 text-sm">Remplissez le formulaire ci-dessous</p>
@@ -533,7 +627,87 @@ onMounted(() => {
         </Transition>
       </div>
     </Transition>
-    </div>
+  </Teleport>
+
+    <!-- Modal Tous les Avis -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="transition duration-300 ease-out"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition duration-200 ease-in"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div
+          v-if="showAllReviewsModal"
+          class="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md"
+          @click.self="showAllReviewsModal = false"
+        >
+        <Transition
+          enter-active-class="transition duration-300 ease-out"
+          enter-from-class="opacity-0 translate-y-8 scale-95"
+          enter-to-class="opacity-100 translate-y-0 scale-100"
+          leave-active-class="transition duration-200 ease-in"
+          leave-from-class="opacity-100 translate-y-0 scale-100"
+          leave-to-class="opacity-0 translate-y-8 scale-95"
+        >
+          <div
+            v-if="showAllReviewsModal"
+            class="bg-white rounded-[2.5rem] shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col relative overflow-hidden"
+          >
+            <!-- Header -->
+            <div class="p-8 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white/80 backdrop-blur-md z-10">
+              <div>
+                <h2 class="text-2xl font-bold text-gray-900">Tous les avis</h2>
+                <p class="text-gray-500 text-sm mt-1">Basé sur {{ service?.reviews }} expériences</p>
+              </div>
+              <button
+                @click="showAllReviewsModal = false"
+                class="w-12 h-12 bg-gray-50 hover:bg-gray-100 rounded-full flex items-center justify-center transition-colors group"
+              >
+                <svg class="w-6 h-6 text-gray-500 group-hover:text-gray-900 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+
+            <!-- List -->
+            <div class="flex-1 overflow-y-auto p-8 space-y-8 scrollbar-hide">
+              <div v-for="review in mockReviews" :key="review.id" class="animate-in fade-in slide-in-from-bottom duration-500">
+                <div class="flex items-center justify-between mb-4">
+                  <div class="flex items-center gap-4">
+                    <img :src="review.userImage" :alt="review.userName" class="w-12 h-12 rounded-full object-cover ring-4 ring-blue-50">
+                    <div>
+                      <div class="font-bold text-gray-900 text-lg">{{ review.userName }}</div>
+                      <div class="text-xs text-blue-600 font-medium bg-blue-50 px-2 py-0.5 rounded-md inline-block">{{ review.date }}</div>
+                    </div>
+                  </div>
+                  <div class="flex text-yellow-400 bg-yellow-50 px-3 py-1 rounded-full">
+                    <svg v-for="i in 5" :key="i" class="w-4 h-4" :fill="i <= review.rating ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  </div>
+                </div>
+                <p class="text-gray-700 leading-relaxed pl-16 italic">"{{ review.comment }}"</p>
+                <div class="mt-6 border-b border-gray-50 ml-16"></div>
+              </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="p-8 border-t border-gray-100 bg-gray-50/50">
+              <button 
+                @click="showAllReviewsModal = false"
+                class="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl hover:bg-slate-800 transition-colors shadow-lg"
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+        </Transition>
+      </div>
+    </Transition>
+    </Teleport>
   </MainLayout>
 </template>
 

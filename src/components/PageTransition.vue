@@ -111,7 +111,7 @@ watch(
         <!-- Loading Text with Stage -->
         <div class="absolute bottom-1/3 left-1/2 -translate-x-1/2 space-y-2 text-center">
           <div class="flex items-center justify-center space-x-2">
-            <span class="text-sm font-semibold text-blue-600" style="font-family: 'Poppins', sans-serif">
+            <span class="text-sm font-semibold text-blue-600">
               {{ currentMessage }}
             </span>
             <div class="flex space-x-1">

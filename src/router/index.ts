@@ -55,6 +55,36 @@ const router = createRouter({
       name: 'register',
       component: () => import('../views/RegisterView.vue'),
     },
+    {
+      path: '/forgot-password',
+      name: 'forgot-password',
+      component: () => import('../views/ForgotPasswordView.vue'),
+    },
+    {
+      path: '/category/:status',
+      name: 'property-category',
+      component: () => import('../views/PropertiesByCategoryView.vue'),
+    },
+    {
+      path: '/help',
+      name: 'help',
+      component: () => import('../views/HelpView.vue'),
+    },
+    {
+      path: '/mentions-legales',
+      name: 'legal',
+      component: () => import('../views/LegalView.vue'),
+    },
+    {
+      path: '/politique-confidentialite',
+      name: 'privacy',
+      component: () => import('../views/PrivacyView.vue'),
+    },
+    {
+      path: '/contact',
+      name: 'contact',
+      component: () => import('../views/ContactView.vue'),
+    },
   ],
 })
 

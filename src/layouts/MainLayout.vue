@@ -16,8 +16,8 @@ withDefaults(defineProps<Props>(), {
     <!-- Fixed Navbar -->
     <NavBarComponent />
     
-    <!-- Main Content with padding-top to account for fixed navbar -->
-    <main class="flex-1 pt-16">
+    <!-- Main Content -->
+    <main class="flex-1">
       <slot />
     </main>
     

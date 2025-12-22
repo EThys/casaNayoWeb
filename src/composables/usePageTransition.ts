@@ -24,12 +24,12 @@ export function usePageTransition() {
     (newPath) => {
       isTransitioning.value = true
       transitionName.value = getTransitionType(newPath)
-      
+
       setTimeout(() => {
         isTransitioning.value = false
       }, 600)
     },
-    { immediate: true }
+    { immediate: true },
   )
 
   return {
@@ -37,4 +37,6 @@ export function usePageTransition() {
     isTransitioning,
   }
 }
+
+
 

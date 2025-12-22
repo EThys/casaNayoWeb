@@ -24,37 +24,61 @@ const features = [
   },
 ]
 
+const props = defineProps<{
+  variant?: 'white' | 'blue'
+}>()
+
 const { isVisible, elementRef } = useScrollAnimation()
 </script>
 
 <template>
   <section
     ref="elementRef"
-    class="relative py-16 lg:py-24 bg-gradient-to-br from-blue-50 via-cyan-50/40 to-indigo-50/30 overflow-hidden"
+    class="relative py-20 lg:py-24 bg-[#1976D2] overflow-hidden border-t border-white/5"
   >
-    <!-- Decorative Background -->
-    <div class="absolute inset-0 overflow-hidden pointer-events-none">
-      <div
-        class="decorative-orb w-96 h-96 bg-indigo-400/10"
-        style="top: 20%; left: -5%; animation-delay: 1s"
-      ></div>
-      <div
-        class="decorative-orb w-[450px] h-[450px] bg-blue-400/10"
-        style="bottom: 10%; right: -5%; animation-delay: 4s; animation-duration: 20s"
-      ></div>
-      <div class="decorative-dots opacity-20"></div>
+    <!-- Background Decor - Elite Style -->
+    <div class="absolute inset-0 z-0">
+      <!-- Background Image with Overlay -->
+      <div class="absolute inset-0">
+        <img 
+          src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1600&q=80" 
+          class="w-full h-full object-cover opacity-30 mix-blend-overlay scale-110"
+          alt="Luxury home background"
+        />
+        <div class="absolute inset-0 bg-gradient-to-br from-[#1976D2]/95 via-[#1976D2]/90 to-[#1976D2]/95"></div>
+      </div>
+      
+      <!-- Premium Mesh Gradient -->
+      <div class="absolute inset-0 opacity-40 mix-blend-overlay">
+        <div class="absolute top-[10%] left-[-5%] w-[40%] h-[40%] bg-blue-400/30 rounded-full blur-[120px] animate-pulse-slow"></div>
+        <div class="absolute bottom-[10%] right-[-5%] w-[50%] h-[50%] bg-white/10 rounded-full blur-[150px] animate-pulse-slow animation-delay-2000"></div>
+      </div>
+
+      <!-- Tech Grid Overlay -->
+      <div class="absolute inset-0 opacity-[0.08] animate-grid-slide"
+           style="background-image: linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px); background-size: 80px 80px;">
+      </div>
+
+      <!-- Cinema Grain -->
+      <div class="absolute inset-0 opacity-[0.02] contrast-150 pointer-events-none z-50" 
+           style="background-image: url('data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.65\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E');">
+      </div>
     </div>
 
     <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <!-- Header Aligned Left -->
       <div
-        class="text-left mb-12 lg:mb-16 scroll-fade-in-up"
-        :class="{ visible: isVisible }"
+        class="text-left mb-20 space-y-4"
+        v-motion
+        :initial="{ opacity: 0, x: -50 }"
+        :visibleOnce="{ opacity: 1, x: 0, transition: { duration: 1000, ease: 'easeOut' } }"
       >
-        <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-3">
-          Pourquoi nous choisir ?
+
+        <h2 class="text-4xl md:text-6xl font-black text-white tracking-tighter leading-tight max-w-3xl">
+          Pourquoi choisir <br class="hidden md:block" /> <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-100 to-white">l'excellence ?</span>
         </h2>
-        <p class="text-lg text-gray-600 max-w-3xl">
-          Nous offrons les meilleurs services immobiliers pour vous aider à trouver votre bien idéal
+        <p class="text-blue-50 text-lg md:text-xl max-w-2xl font-light leading-relaxed">
+          Nous redéfinissons les standards de l'immobilier en RDC par l'innovation et la transparence.
         </p>
       </div>
 
@@ -62,30 +86,60 @@ const { isVisible, elementRef } = useScrollAnimation()
         <div
           v-for="(feature, index) in features"
           :key="index"
-          class="scroll-fade-in-left"
-          :class="{ visible: isVisible, [`stagger-${index + 1}`]: index % 2 === 0 }"
+          class="group relative"
+          v-motion
+          :initial="{ opacity: 0, y: 50 }"
+          :visibleOnce="{ 
+            opacity: 1, 
+            y: 0, 
+            transition: { 
+              delay: index * 100,
+              type: 'spring',
+              stiffness: 50
+            } 
+          }"
+          :hovered="{ 
+            y: -10,
+            scale: 1.02,
+            transition: { type: 'spring', stiffness: 300, damping: 10 } 
+          }"
         >
-          <div
-            class="bg-white rounded-2xl p-6 lg:p-8 border border-gray-100 hover:border-gray-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
-          >
-            <div class="w-14 h-14 bg-blue-600/10 rounded-full flex items-center justify-center mb-6 transform hover:scale-110 transition-transform duration-300">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="w-7 h-7 text-blue-600"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  :d="feature.icon"
-                />
-              </svg>
+          <!-- Feature Card - Awwwards Glassmorphism -->
+          <div class="relative h-full bg-white/[0.08] backdrop-blur-xl border border-white/20 rounded-[40px] p-8 lg:p-10 transition-all duration-500 overflow-hidden shadow-2xl">
+            <!-- Numbering Display -->
+            <div class="absolute -top-6 -right-6 text-9xl font-black text-white/[0.03] transition-colors duration-500 group-hover:text-white/[0.06]">
+              0{{ index + 1 }}
             </div>
-            <h3 class="text-xl font-semibold text-gray-900 mb-3">{{ feature.title }}</h3>
-            <p class="text-gray-600 text-sm lg:text-base">{{ feature.description }}</p>
+
+            <div class="relative z-10 flex flex-col h-full">
+              <div class="w-16 h-16 bg-white rounded-3xl flex items-center justify-center mb-8 shadow-2xl group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="w-8 h-8 text-[#1976D2]"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    :d="feature.icon"
+                  />
+                </svg>
+              </div>
+              
+              <h3 class="text-2xl font-black text-white mb-4 tracking-tighter group-hover:text-blue-100 transition-colors">
+                {{ feature.title }}
+              </h3>
+              
+              <p class="text-blue-50/70 text-base leading-relaxed font-light">
+                {{ feature.description }}
+              </p>
+            </div>
+
+            <!-- Bottom decorative glow -->
+            <div class="absolute bottom-[-50px] left-[50%] translate-x-[-50%] w-[120px] h-[120px] bg-white/20 rounded-full blur-[60px] opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
           </div>
         </div>
       </div>
@@ -94,8 +148,27 @@ const { isVisible, elementRef } = useScrollAnimation()
 </template>
 
 <style scoped>
+@keyframes grid-slide {
+  from { background-position: 0 0; }
+  to { background-position: 80px 80px; }
+}
+
+.animate-grid-slide {
+  animation: grid-slide 20s linear infinite;
+}
+
+@keyframes pulse-slow {
+  0%, 100% { transform: scale(1); opacity: 0.4; }
+  50% { transform: scale(1.1); opacity: 0.6; }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 10s ease-in-out infinite;
+}
+
+.animation-delay-2000 { animation-delay: 2s; }
+
 section {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
-    sans-serif;
+  font-family: 'Inter', sans-serif;
 }
 </style>

@@ -33,37 +33,57 @@ const services = [
   },
 ]
 
+const props = defineProps<{
+  variant?: 'white' | 'blue'
+}>()
+
 const { isVisible, elementRef } = useScrollAnimation()
 </script>
 
 <template>
   <section
     ref="elementRef"
-    class="relative py-16 lg:py-24 bg-gradient-to-br from-white via-indigo-50/20 to-blue-50/30 overflow-hidden"
+    class="relative py-20 lg:py-24 bg-[#1976D2] overflow-hidden border-t border-white/5"
   >
-    <!-- Decorative Background -->
-    <div class="absolute inset-0 overflow-hidden pointer-events-none">
-      <div
-        class="decorative-orb w-[500px] h-[500px] bg-blue-400/5"
-        style="top: -10%; right: -10%; animation-delay: 0s"
-      ></div>
-      <div
-        class="decorative-orb w-[400px] h-[400px] bg-indigo-400/5"
-        style="bottom: -10%; left: -10%; animation-delay: 3s; animation-duration: 18s"
-      ></div>
-      <div class="decorative-grid"></div>
+    <!-- Background Decor - Elite Style -->
+    <div class="absolute inset-0 z-0">
+      <!-- Background Image with Overlay -->
+      <div class="absolute inset-0">
+        <img 
+          src="https://images.unsplash.com/photo-1454165833767-027508496b4c?w=1600&q=80" 
+          class="w-full h-full object-cover opacity-30 mix-blend-overlay scale-110"
+          alt="Services background"
+        />
+        <div class="absolute inset-0 bg-gradient-to-br from-[#1976D2]/95 via-[#1976D2]/90 to-[#1976D2]/95"></div>
+      </div>
+      
+      <!-- Premium Mesh Gradient -->
+      <div class="absolute inset-0 opacity-40 mix-blend-overlay">
+        <div class="absolute top-[10%] left-[-5%] w-[40%] h-[40%] bg-blue-400/30 rounded-full blur-[120px] animate-pulse-slow"></div>
+        <div class="absolute bottom-[10%] right-[-5%] w-[50%] h-[50%] bg-white/10 rounded-full blur-[150px] animate-pulse-slow animation-delay-2000"></div>
+      </div>
+
+      <!-- Tech Grid Overlay -->
+      <div class="absolute inset-0 opacity-[0.08] animate-grid-slide"
+           style="background-image: linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px); background-size: 80px 80px;">
+      </div>
+
+      <!-- Cinema Grain -->
+      <div class="absolute inset-0 opacity-[0.02] contrast-150 pointer-events-none z-50" 
+           style="background-image: url('data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.65\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E');">
+      </div>
     </div>
 
     <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div
-        class="text-left mb-12 lg:mb-16 scroll-fade-in-up"
-        :class="{ visible: isVisible }"
+        class="text-left mb-16 space-y-4 transition-all duration-1000 ease-out"
+        :class="{ 'opacity-100 translate-y-0': isVisible, 'opacity-0 translate-y-10': !isVisible }"
       >
-        <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-3">
-          Nos services
+        <h2 class="text-4xl md:text-6xl font-black text-white tracking-tighter leading-tight">
+          Une expérience <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-100 to-white">sur mesure</span>
         </h2>
-        <p class="text-lg text-gray-600 max-w-3xl">
-          Une gamme complète de services immobiliers pour répondre à tous vos besoins
+        <p class="text-blue-50 text-lg md:text-xl max-w-3xl font-light leading-relaxed">
+          Une gamme complète de solutions immobilières conçues pour l'excellence et la sérénité.
         </p>
       </div>
 
@@ -71,35 +91,37 @@ const { isVisible, elementRef } = useScrollAnimation()
         <div
           v-for="(service, index) in services"
           :key="index"
-          class="scroll-scale-in"
-          :class="{ visible: isVisible, [`stagger-${index + 1}`]: true }"
+          class="transition-all duration-700 ease-out"
+          :style="{ transitionDelay: `${index * 150}ms` }"
+          :class="{ 'opacity-100 translate-y-0': isVisible, 'opacity-0 translate-y-20': !isVisible }"
         >
           <div
-            class="bg-white rounded-2xl p-6 lg:p-8 border border-gray-100 hover:border-gray-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group"
+            class="h-full bg-white/[0.05] backdrop-blur-xl rounded-[40px] p-8 lg:p-10 border border-white/10 hover:bg-white/[0.1] hover:border-white/30 hover:-translate-y-4 transition-all duration-500 group shadow-2xl"
           >
             <div
               :class="[
-                'w-14 h-14 rounded-xl flex items-center justify-center mb-6 transform group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300',
-                service.color,
+                'w-16 h-16 rounded-3xl flex items-center justify-center mb-8 shadow-2xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 bg-white',
               ]"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                class="w-7 h-7 text-white"
+                class="w-8 h-8 text-[#1976D2]"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
+                stroke-width="2.5"
               >
                 <path
                   stroke-linecap="round"
                   stroke-linejoin="round"
-                  stroke-width="2"
                   :d="service.icon"
                 />
               </svg>
             </div>
-            <h3 class="text-xl font-semibold text-gray-900 mb-3">{{ service.title }}</h3>
-            <p class="text-gray-600 leading-relaxed text-sm lg:text-base">{{ service.description }}</p>
+            <h3 class="text-2xl font-black text-white mb-4 tracking-tighter group-hover:text-blue-100 transition-colors">
+              {{ service.title }}
+            </h3>
+            <p class="text-blue-50/70 text-base leading-relaxed font-light line-clamp-2">{{ service.description }}</p>
           </div>
         </div>
       </div>
@@ -108,8 +130,35 @@ const { isVisible, elementRef } = useScrollAnimation()
 </template>
 
 <style scoped>
+@keyframes grid-slide {
+  from { background-position: 0 0; }
+  to { background-position: 80px 80px; }
+}
+
+.animate-grid-slide {
+  animation: grid-slide 20s linear infinite;
+}
+
+@keyframes pulse-slow {
+  0%, 100% { transform: scale(1); opacity: 0.4; }
+  50% { transform: scale(1.1); opacity: 0.6; }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 10s ease-in-out infinite;
+}
+
+.animation-delay-2000 { animation-delay: 2s; }
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
 section {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
-    sans-serif;
+  font-family: 'Inter', sans-serif;
 }
 </style>

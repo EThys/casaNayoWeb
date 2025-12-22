@@ -1,6 +1,7 @@
 // Types de propriétés étendus
 export type PropertyType =
   | 'house' // Maison
+  | 'studio' // Studio
   | 'apartment' // Appartement
   | 'villa' // Villa
   | 'land' // Terrain
@@ -39,6 +40,10 @@ export interface Property {
   parking?: number
   capacity?: number // Pour salles de fête, hôtels, etc.
   rooms?: number // Nombre total de pièces
+  floor?: number // Étage
+  available?: boolean // Disponibilité de la propriété
+  createdAt?: string // Date de création
+  updatedAt?: string // Date de mise à jour
 }
 
 export type ServiceCategory = 
@@ -52,6 +57,17 @@ export type ServiceCategory =
   | 'carpenter'
   | 'tiler'
   | 'refrigeration-technician'
+  | 'housekeeper'
+  | 'mason'
+
+export interface Review {
+  id: string
+  userName: string
+  userImage?: string
+  rating: number
+  comment: string
+  date: string
+}
 
 export interface Service {
   id: string
@@ -64,6 +80,7 @@ export interface Service {
   category: ServiceCategory
   rating?: number
   reviews?: number
+  reviewList?: Review[]
   phone?: string
   availability?: string
 }
@@ -90,6 +107,7 @@ export interface SearchFilters {
 // Mapping des types vers les groupes
 export const PROPERTY_TYPE_TO_GROUP: Record<PropertyType, PropertyGroup> = {
   house: 'residential',
+  studio: 'residential',
   apartment: 'residential',
   villa: 'residential',
   land: 'land',
@@ -105,6 +123,7 @@ export const PROPERTY_TYPE_TO_GROUP: Record<PropertyType, PropertyGroup> = {
 // Labels pour les types
 export const PROPERTY_TYPE_LABELS: Record<PropertyType, string> = {
   house: 'Maison',
+  studio: 'Studio',
   apartment: 'Appartement',
   villa: 'Villa',
   land: 'Terrain',

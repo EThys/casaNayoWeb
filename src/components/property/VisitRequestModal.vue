@@ -55,14 +55,15 @@ const closeModal = () => {
 </script>
 
 <template>
-  <div
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-    @click.self="closeModal"
-  >
+  <Teleport to="body">
     <div
-      class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
-      @click.stop
+      class="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md"
+      @click.self="closeModal"
     >
+      <div
+        class="bg-white rounded-[2.5rem] shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto relative border border-white/20 animate-in fade-in zoom-in duration-300"
+        @click.stop
+      >
       <!-- Header -->
       <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
         <div>
@@ -248,6 +249,7 @@ const closeModal = () => {
       </div>
     </div>
   </div>
+  </Teleport>
 </template>
 
 <style scoped>
